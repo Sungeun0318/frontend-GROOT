@@ -25,6 +25,7 @@ import { motion, useMotionValue, useTransform } from "motion/react";
 import { useEffect, useState, useRef } from "react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { GrootLogo } from "./GrootLogo";
+import { KakaoMapCompanies } from "./KakaoMapCompanies";
 
 function AnimatedCounter({
   end,
@@ -206,6 +207,12 @@ export function Landing() {
               className="hover:text-[#2D6A4F] transition-colors"
             >
               후기
+            </a>
+            <a
+              href="#map"
+              className="hover:text-[#2D6A4F] transition-colors"
+            >
+              참여 기업
             </a>
             <a
               href="#pricing"
@@ -590,6 +597,36 @@ export function Landing() {
               </FloatingCard>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Company Map Section */}
+      <section id="map" className="py-28 bg-white relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <FloatingCard className="text-center mb-16">
+            <span
+              className="inline-block px-4 py-1.5 bg-[#D8F3DC] text-[#2D6A4F] rounded-full text-[0.8rem] mb-5"
+              style={{ fontWeight: 600 }}
+            >
+              PARTNER MAP
+            </span>
+            <h2
+              className="text-[2.25rem] sm:text-[2.75rem] text-[#1a1a1a] mb-4"
+              style={{ fontWeight: 800, letterSpacing: "-0.02em" }}
+            >
+              전국 참여 기업 현황
+            </h2>
+            <p
+              className="text-gray-500 text-[1.1rem] max-w-2xl mx-auto"
+              style={{ lineHeight: 1.7 }}
+            >
+              GROOT와 함께 탄소 흡수 프로젝트에 참여하고 있는 기업들의 위치를 확인하세요
+            </p>
+          </FloatingCard>
+
+          <FloatingCard delay={0.2}>
+            <KakaoMapCompanies height="520px" showList={false} />
+          </FloatingCard>
         </div>
       </section>
 

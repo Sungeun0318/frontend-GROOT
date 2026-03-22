@@ -54,8 +54,8 @@ export function Layout() {
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="p-5 flex items-center gap-3 border-b border-white/10">
-          <GrootLogo size="md" theme="light" />
+        <div className="p-2 flex items-center gap-2 border-b border-white/10">
+          <GrootLogo size="xl" theme="light" />
         </div>
 
         <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
