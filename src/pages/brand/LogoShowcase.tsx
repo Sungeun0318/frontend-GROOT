@@ -1,4 +1,4 @@
-import { GrootLogo } from "./GrootLogo";
+import { GrootLogo } from "@/components/common";
 import { Link } from "react-router";
 import { ArrowLeft } from "lucide-react";
 

@@ -23,9 +23,8 @@ import {
 } from "lucide-react";
 import { motion, useMotionValue, useTransform } from "motion/react";
 import { useEffect, useState, useRef } from "react";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { GrootLogo } from "./GrootLogo";
-import { KakaoMapCompanies } from "./KakaoMapCompanies";
+import { ImageWithFallback } from "@/components/figma";
+import { GrootLogo, KakaoMapCompanies } from "@/components/common";
 
 function AnimatedCounter({
   end,

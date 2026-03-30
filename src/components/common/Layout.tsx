@@ -14,7 +14,7 @@ import {
   ShieldCheck,
   ClipboardCheck,
 } from "lucide-react";
-import { GrootLogo } from "./GrootLogo";
+import { GrootLogo } from "@/components/common/GrootLogo";
 
 const navItems = [
   { to: "/dashboard", label: "대시보드", icon: LayoutDashboard },

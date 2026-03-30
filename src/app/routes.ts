@@ -1,19 +1,16 @@
 import { createBrowserRouter } from "react-router";
-import { Layout } from "./components/Layout";
-import { Landing } from "./components/Landing";
-import { SignUp } from "./components/SignUp";
-import { Login } from "./components/Login";
-import { Dashboard } from "./components/Dashboard";
-import { TreeRecommendation } from "./components/TreeRecommendation";
-import { ApplicationStatus } from "./components/ApplicationStatus";
-import { TreeList } from "./components/TreeList";
-import { CarbonVisualization } from "./components/CarbonVisualization";
-import { Certification } from "./components/Certification";
-import { ESGReport } from "./components/ESGReport";
-import { ExpertReport } from "./components/ExpertReport";
-import { AdminPage } from "./components/AdminPage";
-import { LogoShowcase } from "./components/LogoShowcase";
-import { NotFound } from "./components/NotFound";
+import { Layout } from "@/components/common";
+import { Landing } from "@/pages/landing";
+import { SignUp, Login } from "@/pages/auth";
+import { Dashboard } from "@/pages/dashboard";
+import { TreeRecommendation, TreeList } from "@/pages/tree";
+import { ApplicationStatus } from "@/pages/application";
+import { CarbonVisualization } from "@/pages/carbon";
+import { Certification } from "@/pages/certification";
+import { ESGReport, ExpertReport } from "@/pages/report";
+import { AdminPage } from "@/pages/admin";
+import { LogoShowcase } from "@/pages/brand";
+import { NotFound } from "@/components/common";
 
 export const router = createBrowserRouter([
   {

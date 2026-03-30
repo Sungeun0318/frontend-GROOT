@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { Leaf, Eye, EyeOff, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
-import { GrootLogo } from "./GrootLogo";
+import { GrootLogo } from "@/components/common";
 
 export function SignUp() {
   const navigate = useNavigate();
