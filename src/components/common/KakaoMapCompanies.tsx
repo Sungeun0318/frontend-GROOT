@@ -35,7 +35,7 @@ export function KakaoMapCompanies({ height = "480px", showList = true }: KakaoMa
   useEffect(() => {
     // Kakao Maps SDK 로드
     // 실제 운영 시 YOUR_KAKAO_APP_KEY를 카카오 개발자 콘솔에서 발급받은 JavaScript 키로 교체하세요
-    const KAKAO_APP_KEY = "YOUR_KAKAO_APP_KEY";
+    const KAKAO_APP_KEY = "42704a18299feca7b6e9b3db5637a7de";
 
     if (window.kakao && window.kakao.maps) {
       initMap();

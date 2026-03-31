@@ -27,7 +27,7 @@ interface TreeMeasurement {
   height: string; // 수고 (m)
   crownWidth: string; // 수관폭 (m)
   health: "excellent" | "good" | "fair" | "poor";
-  notes: string;
+  image: string;
 }
 
 const healthLabels: Record<string, { label: string; color: string; emoji: string }> = {
@@ -54,9 +54,9 @@ const mockAssignment = {
 export function ExpertReport() {
   const [submitted, setSubmitted] = useState(false);
   const [measurements, setMeasurements] = useState<TreeMeasurement[]>([
-    { id: "1", species: "편백나무", dbh: "18.5", height: "6.2", crownWidth: "2.8", health: "excellent", notes: "활착 상태 양호, 새순 발생 확인" },
-    { id: "2", species: "편백나무", dbh: "16.2", height: "5.8", crownWidth: "2.4", health: "good", notes: "" },
-    { id: "3", species: "편백나무", dbh: "12.0", height: "4.5", crownWidth: "1.9", health: "fair", notes: "일부 하엽 황변, 배수 상태 확인 필요" },
+    { id: "1", species: "편백나무", dbh: "18.5", height: "6.2", crownWidth: "2.8", health: "excellent", image: "" },
+    { id: "2", species: "편백나무", dbh: "16.2", height: "5.8", crownWidth: "2.4", health: "good", image: "" },
+    { id: "3", species: "편백나무", dbh: "12.0", height: "4.5", crownWidth: "1.9", health: "fair", image: "" },
   ]);
 
   const [weather, setWeather] = useState({ condition: "맑음", temp: "14", humidity: "55" });
@@ -71,7 +71,7 @@ export function ExpertReport() {
   const addMeasurement = () => {
     setMeasurements((prev) => [
       ...prev,
-      { id: String(Date.now()), species: "편백나무", dbh: "", height: "", crownWidth: "", health: "good", notes: "" },
+      { id: String(Date.now()), species: "편백나무", dbh: "", height: "", crownWidth: "", health: "good", image: "" },
     ]);
   };
 
@@ -374,15 +374,42 @@ export function ExpertReport() {
               </div>
 
               {/* Inline note */}
-              <div className="mt-3">
-                <input
-                  type="text"
-                  value={m.notes}
-                  onChange={(e) => updateMeasurement(m.id, "notes", e.target.value)}
-                  placeholder="특이사항 메모..."
-                  className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
-                />
-              </div>
+<div className="mt-3">
+  <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+    측정 사진
+  </label>
+
+  <label className="block cursor-pointer">
+    <div className="aspect-[4/3] max-w-[200px] bg-gray-100 rounded-xl flex flex-col items-center justify-center border border-gray-200 overflow-hidden">
+      {m.image ? (
+        <img
+          src={m.image}
+          alt={`수목 ${idx + 1} 측정 사진`}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <>
+          <Camera className="w-6 h-6 text-gray-300 mb-1" />
+          <span className="text-[0.75rem] text-gray-400">사진 업로드</span>
+        </>
+      )}
+    </div>
+
+    {/* 🔥 핵심 */}
+    <input
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const imageUrl = URL.createObjectURL(file);
+        updateMeasurement(m.id, "image", imageUrl);
+      }}
+    />
+  </label>
+</div>
 
               {/* Estimated CO2 for this tree */}
               {parseFloat(m.dbh) > 0 && (
