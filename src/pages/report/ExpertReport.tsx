@@ -19,6 +19,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 
+
+
 interface TreeMeasurement {
   id: string;
   species: string;
@@ -638,7 +640,7 @@ export function ExpertReport() {
                   selectedPreviousMeasurements.map((prev, idx) => (
                     <div
                       key={prev.id}
-                      className="p-4 bg-gray-50 rounded-xl border border-gray-100"
+                      className="p-4 bg-white rounded-xl border border-dashed border-gray-200"
                     >
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-[0.85rem] text-gray-700" style={{ fontWeight: 700 }}>
