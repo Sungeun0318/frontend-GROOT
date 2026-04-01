@@ -151,7 +151,7 @@ export function ExpertReport() {
   const [overallNote, setOverallNote] = useState(
     "전반적으로 식재 상태가 양호하며, 활착률은 약 95%로 추정됩니다. 일부 배수 불량 구간(남동쪽 저지대)에서 하엽 황변이 관찰되어 배수로 정비가 필요합니다. 차기 답사 시 생장량 비교 측정 권장합니다."
   );
-  const [photos, setPhotos] = useState(["전경 사진 1", "흉고직경 측정 사진", "토양 상태 사진", "배수 불량 구간"]);
+  const [sitePhoto, setSitePhoto] = useState<string | null>(null);
 
   const selectedPreviousMeasurements =
     selectedRound === ""
@@ -605,24 +605,27 @@ export function ExpertReport() {
                   </div>
 
                   {/* Estimated CO2 for this tree */}
-                  {parseFloat(m.dbh) > 0 && (
-                    <div className="mt-3 flex items-center gap-2 text-[0.8rem] flex-wrap">
-                      <span className="text-gray-400">추정 CO₂ 흡수:</span>
-                      <span
-                        className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md"
-                        style={{ fontWeight: 600 }}
-                      >
-                        {estimateCarbonPerTree(parseFloat(m.dbh)).toFixed(1)}kg
-                      </span>
-                      <span className="text-gray-300">|</span>
-                      <span
-                        className={`px-2 py-0.5 rounded-md text-[0.75rem] ${healthLabels[m.health].color}`}
-                        style={{ fontWeight: 600 }}
-                      >
-                        {healthLabels[m.health].emoji} {healthLabels[m.health].label}
-                      </span>
-                    </div>
-                  )}
+                  <div className="mt-3 flex items-center gap-2 text-[0.8rem] flex-wrap">
+                    <span className="text-gray-400">추정 CO₂ 흡수:</span>
+                    <span
+                      className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md"
+                      style={{ fontWeight: 600 }}
+                    >
+                      {(() => {
+                        const dbh = parseFloat(m.dbh);
+                        return !isNaN(dbh) && dbh > 0
+                          ? `${estimateCarbonPerTree(dbh).toFixed(1)}kg`
+                          : "0.0kg";
+                      })()}
+                    </span>
+                    <span className="text-gray-300">|</span>
+                    <span
+                      className={`px-2 py-0.5 rounded-md text-[0.75rem] ${healthLabels[m.health].color}`}
+                      style={{ fontWeight: 600 }}
+                    >
+                      {healthLabels[m.health].emoji} {healthLabels[m.health].label}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -642,58 +645,58 @@ export function ExpertReport() {
                       key={prev.id}
                       className="p-4 bg-white rounded-xl border border-dashed border-gray-200"
                     >
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center justify-between mb-5">
                         <span className="text-[0.85rem] text-gray-700" style={{ fontWeight: 700 }}>
                           #{idx + 1}
                         </span>
                       </div>
 
                       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-  <div>
-    <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
-      수종
-    </label>
-    <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
-      {prev.species}
-    </div>
-  </div>
+                        <div>
+                          <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            수종
+                          </label>
+                          <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
+                            {prev.species}
+                          </div>
+                        </div>
 
-  <div>
-    <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
-      흉고직경 (cm)
-    </label>
-    <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
-      {prev.dbh}
-    </div>
-  </div>
+                        <div>
+                          <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            흉고직경 (cm)
+                          </label>
+                          <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
+                            {prev.dbh}
+                          </div>
+                        </div>
 
-  <div>
-    <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
-      수고 (m)
-    </label>
-    <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
-      {prev.height}
-    </div>
-  </div>
+                        <div>
+                          <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            수고 (m)
+                          </label>
+                          <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
+                            {prev.height}
+                          </div>
+                        </div>
 
-  <div>
-    <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
-      수관폭 (m)
-    </label>
-    <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
-      {prev.crownWidth}
-    </div>
-  </div>
+                        <div>
+                          <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            수관폭 (m)
+                          </label>
+                          <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
+                            {prev.crownWidth}
+                          </div>
+                        </div>
 
-  <div>
-    <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
-      건강상태
-    </label>
-    <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
-      {healthLabels[prev.health].label}
-    </div>
-  </div>
-</div>
+                        <div>
+                          <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            건강상태
+                          </label>
+                          <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
+                            {healthLabels[prev.health].label}
+                          </div>
+                        </div>
+                      </div>
 
                       <div className="mt-3">
                         <p className="text-[0.75rem] text-gray-400 mb-1">이전 측정 사진</p>
@@ -774,34 +777,52 @@ export function ExpertReport() {
         </div>
       </div>
 
-      {/* Photos */}
+      {/* 현장 사진 (전경 사진 1장만) */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
         <h2 className="text-[1rem] text-gray-900 mb-4" style={{ fontWeight: 700 }}>
-          현장 사진
+          전경 사진
         </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {photos.map((photo, i) => (
-            <div key={i} className="relative group">
-              <div className="aspect-[4/3] bg-gray-100 rounded-xl flex flex-col items-center justify-center">
+
+        <label className="block cursor-pointer w-60">
+          <div className="aspect-[4/3] bg-gray-100 rounded-xl flex flex-col items-center justify-center border border-gray-200 overflow-hidden">
+
+            {sitePhoto ? (
+              <img
+                src={sitePhoto}
+                alt="전경 사진"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <>
                 <Camera className="w-6 h-6 text-gray-300 mb-1" />
-                <span className="text-[0.75rem] text-gray-400">{photo}</span>
-              </div>
-              <button
-                onClick={() => setPhotos((p) => p.filter((_, idx) => idx !== i))}
-                className="absolute top-2 right-2 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="w-3 h-3 text-white" />
-              </button>
-            </div>
-          ))}
+                <span className="text-[0.8rem] text-gray-400">전경 사진 업로드</span>
+              </>
+            )}
+          </div>
+
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+
+              const imageUrl = URL.createObjectURL(file);
+              setSitePhoto(imageUrl);
+            }}
+          />
+        </label>
+
+        {/* 삭제 버튼 */}
+        {sitePhoto && (
           <button
-            onClick={() => setPhotos((p) => [...p, `사진 ${p.length + 1}`])}
-            className="aspect-[4/3] border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center hover:border-[#2D6A4F] hover:bg-[#2D6A4F]/5 transition-colors cursor-pointer"
+            onClick={() => setSitePhoto(null)}
+            className="mt-3 px-3 py-1.5 text-[0.8rem] text-red-500 border border-red-200 rounded-lg hover:bg-red-50"
           >
-            <Plus className="w-6 h-6 text-gray-300 mb-1" />
-            <span className="text-[0.8rem] text-gray-400">사진 추가</span>
+            사진 제거
           </button>
-        </div>
+        )}
       </div>
 
       {/* Overall Assessment */}
