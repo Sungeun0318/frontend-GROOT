@@ -28,6 +28,7 @@ interface KakaoMapCompaniesProps {
 
 export function KakaoMapCompanies({ height = "480px", showList = true }: KakaoMapCompaniesProps) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const kakaoMapRef = useRef<any>(null);
   const [selectedCompany, setSelectedCompany] = useState<typeof companies[0] | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState(false);
@@ -63,13 +64,34 @@ export function KakaoMapCompanies({ height = "480px", showList = true }: KakaoMa
     };
   }, []);
 
+  function moveToCompany(company: typeof companies[0]) {
+  if (!window.kakao?.maps || !kakaoMapRef.current) {
+    setSelectedCompany(company);
+    return;
+  }
+
+  const map = kakaoMapRef.current;
+  const moveLatLng = new window.kakao.maps.LatLng(company.lat, company.lng);
+
+  // 중심 이동 + 확대를 한 번에 처리
+  map.jump(moveLatLng, 4, {
+    animate: {
+      duration: 700,
+    },
+  });
+
+  setSelectedCompany(company);
+}
+
   function initMap() {
     if (!mapRef.current) return;
     try {
       const map = new window.kakao.maps.Map(mapRef.current, {
-        center: new window.kakao.maps.LatLng(36.5, 127.5),
-        level: 12,
+        center: new window.kakao.maps.LatLng(37.5664, 126.9778),
+        level: 10, // 지도 확대 정도
       });
+
+      kakaoMapRef.current = map;
 
       companies.forEach((company) => {
         const marker = new window.kakao.maps.Marker({
@@ -93,7 +115,7 @@ export function KakaoMapCompanies({ height = "480px", showList = true }: KakaoMa
 
         window.kakao.maps.event.addListener(marker, "click", () => {
           infowindow.open(map, marker);
-          setSelectedCompany(company);
+          moveToCompany(company);
         });
       });
 
@@ -115,7 +137,7 @@ export function KakaoMapCompanies({ height = "480px", showList = true }: KakaoMa
             {/* Stylized map background */}
             <div className="absolute inset-0 opacity-10" style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%232D6A4F'%3E%3Ccircle cx='10' cy='30' r='2'/%3E%3Ccircle cx='50' cy='20' r='2'/%3E%3Ccircle cx='80' cy='50' r='2'/%3E%3Ccircle cx='30' cy='70' r='2'/%3E%3Ccircle cx='70' cy='80' r='2'/%3E%3Ccircle cx='20' cy='50' r='1.5'/%3E%3Ccircle cx='60' cy='60' r='1.5'/%3E%3Ccircle cx='90' cy='30' r='1.5'/%3E%3Ccircle cx='40' cy='40' r='1.5'/%3E%3C/g%3E%3C/svg%3E")`
-            }}/>
+            }} />
 
             {/* Mock markers on map */}
             <div className="absolute inset-0">
@@ -143,7 +165,7 @@ export function KakaoMapCompanies({ height = "480px", showList = true }: KakaoMa
                 return (
                   <button
                     key={company.id}
-                    onClick={() => setSelectedCompany(company)}
+                    onClick={() => moveToCompany(company)}
                     className="absolute group"
                     style={{ top: pos.top, left: pos.left, transform: "translate(-50%, -100%)" }}
                   >
@@ -233,16 +255,14 @@ export function KakaoMapCompanies({ height = "480px", showList = true }: KakaoMa
           {companies.map((company) => (
             <button
               key={company.id}
-              onClick={() => setSelectedCompany(company)}
-              className={`flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${
-                selectedCompany?.id === company.id
+              onClick={() => moveToCompany(company)}
+              className={`flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${selectedCompany?.id === company.id
                   ? "border-[#52B788] bg-[#F0FFF4] shadow-sm"
                   : "border-gray-100 bg-white hover:border-[#52B788]/30 hover:bg-[#FAFFFE]"
-              }`}
+                }`}
             >
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                selectedCompany?.id === company.id ? "bg-[#2D6A4F]" : "bg-[#D8F3DC]"
-              }`}>
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${selectedCompany?.id === company.id ? "bg-[#2D6A4F]" : "bg-[#D8F3DC]"
+                }`}>
                 <Building2 className={`w-5 h-5 ${selectedCompany?.id === company.id ? "text-white" : "text-[#2D6A4F]"}`} />
               </div>
               <div className="flex-1 min-w-0">
