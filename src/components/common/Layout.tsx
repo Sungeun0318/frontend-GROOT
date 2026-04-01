@@ -13,6 +13,7 @@ import {
   X,
   ShieldCheck,
   ClipboardCheck,
+  UserCircle, 
 } from "lucide-react";
 import { GrootLogo } from "@/components/common/GrootLogo";
 
@@ -26,6 +27,7 @@ const navItems = [
   { to: "/esg-report", label: "ESG 보고서", icon: FileText },
   { to: "/expert-report", label: "전문가 보고서", icon: ClipboardCheck },
   { to: "/admin", label: "관리자", icon: ShieldCheck },
+  { to: "/mypage", label: "마이페이지", icon: UserCircle },
 ];
 
 export function Layout() {

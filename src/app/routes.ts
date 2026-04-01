@@ -11,6 +11,7 @@ import { ESGReport, ExpertReport } from "@/pages/report";
 import { AdminPage } from "@/pages/admin";
 import { LogoShowcase } from "@/pages/brand";
 import { NotFound } from "@/components/common";
+import { MyPage } from "@/pages/mypage";
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +21,7 @@ export const router = createBrowserRouter([
       { index: true, Component: Landing },
       { path: "signup", Component: SignUp },
       { path: "login", Component: Login },
+      { path: "mypage", Component: MyPage },
       { path: "dashboard", Component: Dashboard },
       { path: "recommend", Component: TreeRecommendation },
       { path: "applications", Component: ApplicationStatus },
