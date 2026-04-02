@@ -29,6 +29,8 @@ interface TreeMeasurement {
   crownWidth: string; // 수관폭 (m)
   health: "excellent" | "good" | "fair" | "poor";
   image: string;
+  latitude: string;
+  longitude: string;
 }
 
 interface InspectionRound {
@@ -79,6 +81,8 @@ const previousRoundData: InspectionRound[] = [
         crownWidth: "2.0",
         health: "good",
         image: "",
+        latitude: "",
+        longitude: "",
       },
       {
         id: "0-2",
@@ -88,6 +92,8 @@ const previousRoundData: InspectionRound[] = [
         crownWidth: "1.9",
         health: "good",
         image: "",
+        latitude: "",
+        longitude: "",
       },
       {
         id: "0-3",
@@ -97,6 +103,8 @@ const previousRoundData: InspectionRound[] = [
         crownWidth: "1.6",
         health: "fair",
         image: "",
+        latitude: "",
+        longitude: "",
       },
     ],
   },
@@ -111,6 +119,8 @@ const previousRoundData: InspectionRound[] = [
         crownWidth: "2.3",
         health: "excellent",
         image: "",
+        latitude: "",
+        longitude: "",
       },
       {
         id: "1-2",
@@ -120,6 +130,8 @@ const previousRoundData: InspectionRound[] = [
         crownWidth: "2.2",
         health: "good",
         image: "",
+        latitude: "",
+        longitude: "",
       },
       {
         id: "1-3",
@@ -129,6 +141,8 @@ const previousRoundData: InspectionRound[] = [
         crownWidth: "1.8",
         health: "fair",
         image: "",
+        latitude: "",
+        longitude: "",
       },
     ],
   },
@@ -139,9 +153,18 @@ export function ExpertReport() {
   const [selectedRound, setSelectedRound] = useState<string>("");
 
   const [measurements, setMeasurements] = useState<TreeMeasurement[]>([
-    { id: "1", species: "편백나무", dbh: "18.5", height: "6.2", crownWidth: "2.8", health: "excellent", image: "" },
-    { id: "2", species: "편백나무", dbh: "16.2", height: "5.8", crownWidth: "2.4", health: "good", image: "" },
-    { id: "3", species: "편백나무", dbh: "12.0", height: "4.5", crownWidth: "1.9", health: "fair", image: "" },
+    {
+      id: "1", species: "편백나무", dbh: "18.5", height: "6.2", crownWidth: "2.8", health: "excellent", image: "", latitude: "",
+      longitude: ""
+    },
+    {
+      id: "2", species: "편백나무", dbh: "16.2", height: "5.8", crownWidth: "2.4", health: "good", image: "", latitude: "",
+      longitude: ""
+    },
+    {
+      id: "3", species: "편백나무", dbh: "12.0", height: "4.5", crownWidth: "1.9", health: "fair", image: "", latitude: "",
+      longitude: ""
+    },
   ]);
 
   const [weather, setWeather] = useState({ condition: "맑음", temp: "14", humidity: "55" });
@@ -174,6 +197,8 @@ export function ExpertReport() {
         crownWidth: "",
         health: "good",
         image: "",
+        latitude: "",
+        longitude: "",
       },
     ]);
   };
@@ -184,6 +209,38 @@ export function ExpertReport() {
 
   const updateMeasurement = (id: string, field: keyof TreeMeasurement, value: string) => {
     setMeasurements((prev) => prev.map((m) => (m.id === id ? { ...m, [field]: value } : m)));
+  };
+
+
+  const setCurrentLocation = (id: string) => {
+    if (!navigator.geolocation) {
+      alert("이 브라우저에서는 위치 정보를 지원하지 않습니다.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude.toFixed(6);
+        const lng = position.coords.longitude.toFixed(6);
+
+        setMeasurements((prev) =>
+          prev.map((m) =>
+            m.id === id
+              ? { ...m, latitude: lat, longitude: lng }
+              : m
+          )
+        );
+      },
+      (error) => {
+        console.error(error);
+        alert("위치 정보를 가져오지 못했습니다. 위치 권한을 확인해주세요.");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
   };
 
   const estimateCarbonPerTree = (dbhCm: number) => {
@@ -482,88 +539,136 @@ export function ExpertReport() {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                    <div>
-                      <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
-                        수종
-                      </label>
-                      <select
-                        value={m.species}
-                        onChange={(e) => updateMeasurement(m.id, "species", e.target.value)}
-                        className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F] bg-white"
-                      >
-                        {speciesOptions.map((s) => (
-                          <option key={s}>{s}</option>
-                        ))}
-                      </select>
+                  <div className="space-y-3">
+                    {/* 1번째 줄 */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div>
+                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                          수종
+                        </label>
+                        <select
+                          value={m.species}
+                          onChange={(e) => updateMeasurement(m.id, "species", e.target.value)}
+                          className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F] bg-white"
+                        >
+                          {speciesOptions.map((s) => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label
+                          className="text-[0.7rem] text-gray-400 mb-1 flex items-center gap-1"
+                          style={{ fontWeight: 600 }}
+                        >
+                          <Ruler className="w-3 h-3" /> 흉고직경 (cm)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={m.dbh}
+                          onChange={(e) => updateMeasurement(m.id, "dbh", e.target.value)}
+                          placeholder="0.0"
+                          className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                          수고 (m)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={m.height}
+                          onChange={(e) => updateMeasurement(m.id, "height", e.target.value)}
+                          placeholder="0.0"
+                          className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                          수관폭 (m)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={m.crownWidth}
+                          onChange={(e) => updateMeasurement(m.id, "crownWidth", e.target.value)}
+                          placeholder="0.0"
+                          className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
+                        />
+                      </div>
                     </div>
 
-                    <div>
-                      <label
-                        className="text-[0.7rem] text-gray-400 mb-1 flex items-center gap-1"
-                        style={{ fontWeight: 600 }}
-                      >
-                        <Ruler className="w-3 h-3" /> 흉고직경 (cm)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={m.dbh}
-                        onChange={(e) => updateMeasurement(m.id, "dbh", e.target.value)}
-                        placeholder="0.0"
-                        className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
-                      />
-                    </div>
+                    {/* 2번째 줄 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div>
+                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                          건강상태
+                        </label>
+                        <select
+                          value={m.health}
+                          onChange={(e) =>
+                            updateMeasurement(
+                              m.id,
+                              "health",
+                              e.target.value as TreeMeasurement["health"]
+                            )
+                          }
+                          className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F] bg-white"
+                        >
+                          {Object.entries(healthLabels).map(([key, { label }]) => (
+                            <option key={key} value={key}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                    <div>
-                      <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
-                        수고 (m)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={m.height}
-                        onChange={(e) => updateMeasurement(m.id, "height", e.target.value)}
-                        placeholder="0.0"
-                        className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
-                      />
-                    </div>
+                      <div>
+                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                          위도
+                        </label>
+                        <input
+                          type="number"
+                          step="0.000001"
+                          value={m.latitude}
+                          onChange={(e) => updateMeasurement(m.id, "latitude", e.target.value)}
+                          placeholder="예: 35.824223"
+                          className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
+                        />
+                      </div>
 
-                    <div>
-                      <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
-                        수관폭 (m)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        value={m.crownWidth}
-                        onChange={(e) => updateMeasurement(m.id, "crownWidth", e.target.value)}
-                        placeholder="0.0"
-                        className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
-                      />
-                    </div>
+                      <div>
+                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                          경도
+                        </label>
+                        <input
+                          type="number"
+                          step="0.000001"
+                          value={m.longitude}
+                          onChange={(e) => updateMeasurement(m.id, "longitude", e.target.value)}
+                          placeholder="예: 127.148000"
+                          className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
+                        />
+                      </div>
 
-                    <div>
-                      <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
-                        건강상태
-                      </label>
-                      <select
-                        value={m.health}
-                        onChange={(e) =>
-                          updateMeasurement(
-                            m.id,
-                            "health",
-                            e.target.value as TreeMeasurement["health"]
-                          )
-                        }
-                        className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F] bg-white"
-                      >
-                        {Object.entries(healthLabels).map(([key, { label }]) => (
-                          <option key={key} value={key}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="flex flex-col justify-end">
+                        <label className="text-[0.7rem] text-gray-400 mb-1 block invisible">
+                          위치 등록
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentLocation(m.id)}
+                          className="w-full px-3 py-2 rounded-lg bg-blue-600 text-white text-[0.8rem] hover:bg-blue-700 transition-colors"
+                          style={{ fontWeight: 600 }}
+                        >
+                          내 위치 등록
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -603,6 +708,8 @@ export function ExpertReport() {
                       />
                     </label>
                   </div>
+
+                  
 
                   {/* Estimated CO2 for this tree */}
                   <div className="mt-3 flex items-center gap-2 text-[0.8rem] flex-wrap">
@@ -651,7 +758,7 @@ export function ExpertReport() {
                         </span>
                       </div>
 
-                      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                      <div className="grid grid-cols-2 lg:grid-cols-7 gap-3">
                         <div>
                           <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
                             수종
@@ -694,6 +801,24 @@ export function ExpertReport() {
                           </label>
                           <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
                             {healthLabels[prev.health].label}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            위도
+                          </label>
+                          <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
+                            {prev.latitude || "-"}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            경도
+                          </label>
+                          <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
+                            {prev.longitude || "-"}
                           </div>
                         </div>
                       </div>

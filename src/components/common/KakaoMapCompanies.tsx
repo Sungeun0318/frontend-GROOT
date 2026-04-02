@@ -15,6 +15,31 @@ const companies = [
   { id: 10, name: "서울환경", address: "서울특별시 마포구 월드컵북로 396", trees: 512, carbon: "18,900 kg", lat: 37.5665, lng: 126.9002, grade: "산림 🏔️" },
 ];
 
+// 나무 타입 
+type TreePoint = {
+  treeId: number;
+  detailId: number;
+  treeType: string;
+  latitude: number;
+  longitude: number;
+};
+
+// 나무 샘플 
+const companyTrees: Record<number, TreePoint[]> = {
+  1: [
+    { treeId: 101, detailId: 1, treeType: "기억나무 A", latitude: 37.5018, longitude: 127.0401 },
+    { treeId: 102, detailId: 2, treeType: "기억나무 B", latitude: 37.5007, longitude: 127.0388 },
+    { treeId: 103, detailId: 3, treeType: "기억나무 C", latitude: 37.5021, longitude: 127.0412 },
+  ],
+  2: [
+    { treeId: 201, detailId: 1, treeType: "기억나무 D", latitude: 37.5727, longitude: 126.9775 },
+    { treeId: 202, detailId: 2, treeType: "기억나무 E", latitude: 37.5719, longitude: 126.9762 },
+  ],
+};
+
+
+
+
 declare global {
   interface Window {
     kakao: any;
@@ -59,10 +84,25 @@ export function KakaoMapCompanies({ height = "480px", showList = true }: KakaoMa
 
     document.head.appendChild(script);
 
+
+
+
     return () => {
       // cleanup if needed
     };
   }, []);
+
+useEffect(() => {
+  if (!selectedCompany) {
+    clearTreeMarkers();
+    return;
+  }
+
+  showTreeMarkers(selectedCompany.id);
+}, [selectedCompany]);
+
+
+
 
   function moveToCompany(company: typeof companies[0]) {
   if (!window.kakao?.maps || !kakaoMapRef.current) {
@@ -116,15 +156,57 @@ export function KakaoMapCompanies({ height = "480px", showList = true }: KakaoMa
         window.kakao.maps.event.addListener(marker, "click", () => {
           infowindow.open(map, marker);
           moveToCompany(company);
+          
         });
       });
+
+      
 
       setMapLoaded(true);
     } catch {
       setMapError(true);
     }
   }
+const treeMarkersRef = useRef<any[]>([]);
 
+function clearTreeMarkers() {
+  treeMarkersRef.current.forEach((marker) => marker.setMap(null));
+  treeMarkersRef.current = [];
+}
+
+function showTreeMarkers(companyId: number) {
+  if (!window.kakao?.maps || !kakaoMapRef.current) return;
+
+  clearTreeMarkers();
+
+  const trees = companyTrees[companyId] || [];
+  const map = kakaoMapRef.current;
+
+  trees.forEach((tree) => {
+    const content = document.createElement("div");
+    content.style.width = "10px";
+    content.style.height = "10px";
+    content.style.borderRadius = "9999px";
+    content.style.background = "#2D6A4F";
+    content.style.border = "2px solid white";
+    content.style.boxShadow = "0 0 6px rgba(0,0,0,0.2)";
+    content.title = tree.treeType;
+
+    const overlay = new window.kakao.maps.CustomOverlay({
+      position: new window.kakao.maps.LatLng(tree.latitude, tree.longitude),
+      content,
+      yAnchor: 0.5,
+    });
+
+    overlay.setMap(map);
+    treeMarkersRef.current.push(overlay);
+  });
+}
+
+
+
+
+  
   return (
     <div className="space-y-6">
       {/* Map Container */}
