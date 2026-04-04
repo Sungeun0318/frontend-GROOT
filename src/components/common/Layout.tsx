@@ -13,20 +13,22 @@ import {
   X,
   ShieldCheck,
   ClipboardCheck,
-  UserCircle, 
+  UserCircle,
+  CalendarClock,
 } from "lucide-react";
 import { GrootLogo } from "@/components/common/GrootLogo";
 
 const navItems = [
   { to: "/dashboard", label: "대시보드", icon: LayoutDashboard },
-  { to: "/recommend", label: "수목 추천 · 신청", icon: TreePine },
-  { to: "/applications", label: "신청 현황", icon: ClipboardList },
+  { to: "/recommend", label: "수목 추천", icon: TreePine },
+  { to: "/applications", label: "답사 신청 현황", icon: ClipboardList },
   { to: "/trees", label: "나무 목록", icon: Trees },
   { to: "/carbon", label: "탄소 현황", icon: BarChart3 },
   { to: "/certification", label: "인증마크", icon: Award },
   { to: "/esg-report", label: "ESG 보고서", icon: FileText },
   { to: "/expert-report", label: "전문가 보고서", icon: ClipboardCheck },
   { to: "/admin", label: "관리자", icon: ShieldCheck },
+  { to: "/admin/schedules", label: "전문가 일정 관리", icon: CalendarClock },
   { to: "/mypage", label: "마이페이지", icon: UserCircle },
 ];
 

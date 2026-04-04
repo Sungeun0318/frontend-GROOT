@@ -140,11 +140,11 @@ export function Dashboard() {
             <h3 className="text-[1rem] mb-4" style={{ fontWeight: 600 }}>빠른 메뉴</h3>
             <div className="space-y-3">
               <button
-                onClick={() => navigate("/recommend")}
+                onClick={() => navigate("/applications/new")}
                 className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#2D6A4F] text-white hover:bg-[#235c43] transition-colors"
               >
                 <TreePine className="w-5 h-5" />
-                <span className="flex-1 text-left">새 나무 신청하기</span>
+                <span className="flex-1 text-left">답사 신청하기</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button
