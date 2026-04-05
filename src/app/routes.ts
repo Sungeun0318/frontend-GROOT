@@ -12,6 +12,7 @@ import { AdminPage } from "@/pages/admin";
 import { LogoShowcase } from "@/pages/brand";
 import { NotFound } from "@/components/common";
 import { MyPage } from "@/pages/mypage";
+import Application from "@/components/axios/Application";
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
       { path: "expert-report", Component: ExpertReport },
       { path: "admin", Component: AdminPage },
       { path: "brand", Component: LogoShowcase },
+      { path: "api/applications", Component: Application },
       { path: "*", Component: NotFound },
     ],
   },
