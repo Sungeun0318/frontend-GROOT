@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { GrootLogo } from "@/components/common/GrootLogo";
 
+const isAdmin = Number(localStorage.getItem("isAdmin")) === 1;
+
 const navItems = [
   { to: "/dashboard", label: "대시보드", icon: LayoutDashboard },
   { to: "/recommend", label: "수목 추천 · 신청", icon: TreePine },
@@ -26,7 +28,7 @@ const navItems = [
   { to: "/certification", label: "인증마크", icon: Award },
   { to: "/esg-report", label: "ESG 보고서", icon: FileText },
   { to: "/expert-report", label: "전문가 보고서", icon: ClipboardCheck },
-  { to: "/admin", label: "관리자", icon: ShieldCheck },
+  ...(isAdmin ? [{ to: "/admin", label: "관리자", icon: ShieldCheck }] : []),
   { to: "/mypage", label: "마이페이지", icon: UserCircle },
 ];
 
@@ -36,7 +38,7 @@ export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Landing, login, signup pages don't use sidebar layout
-  if (["/", "/login", "/signup"].includes(location.pathname)) {
+  if (["/", "/login", "/signup" ,"/company-register", "/select-register"].includes(location.pathname)) {
     return <Outlet />;
   }
 

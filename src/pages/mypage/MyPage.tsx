@@ -1,24 +1,10 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import {
   User, Building2, Lock, Eye, EyeOff, CheckCircle,
   AlertTriangle, LogOut, FileText, Upload, Pencil,
 } from "lucide-react";
-
-const mockUser = {
-  managerName: "김그린",
-  email: "kim@greentech.co.kr",
-  phone: "010-1234-5678",
-};
-
-const mockCompany = {
-  companyName: "그린테크 주식회사",
-  business_number: "123-45-67890",
-  ceoName: "홍길동",
-  startDate: "2018-03-22",
-  address: "서울특별시 강남구 테헤란로 123",
-  businessLicense: "사업자등록증_그린테크.pdf",
-};
+import axios from "axios";
 
 function EditModal({ label, initialValue, onSave, onClose }: {
   label: string; initialValue: string; onSave: (v: string) => void; onClose: () => void;
@@ -47,11 +33,13 @@ function EditModal({ label, initialValue, onSave, onClose }: {
 export function MyPage() {
   const navigate = useNavigate();
   const careerInputRef = useRef<HTMLInputElement>(null);
+  const token = localStorage.getItem("token");
 
-  const [managerName, setManagerName] = useState(mockUser.managerName);
-  const [phone, setPhone] = useState(mockUser.phone);
+  const [userInfo, setUserInfo] = useState<any>(null);
+  const [party_name, setPartyName] = useState("");
+  const [company_number, setCompanyNumber] = useState("");
   const [careerFile, setCareerFile] = useState<File | null>(null);
-  const [editing, setEditing] = useState<null | "name" | "phone">(null);
+  const [editing, setEditing] = useState<null | "party_name" | "company_number">(null);
 
   const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
   const [showCurrent, setShowCurrent] = useState(false);
@@ -63,13 +51,54 @@ export function MyPage() {
   const pwValid = pwForm.next.length >= 8;
   const pwMatch = pwForm.next.length > 0 && pwForm.next === pwForm.confirm;
 
-  const handlePwSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    axios.get("/api/member/myinfo", {
+      headers: { token: token }
+    }).then((res) => {
+      setUserInfo(res.data);
+      setPartyName(res.data.party_name);
+      setCompanyNumber(res.data.company_number);
+    });
+  }, []);
+
+  const handleUpdate = async (updateData: any) => {
+    const formData = new FormData();
+    Object.entries(updateData).forEach(([key, val]) => {
+      if (val) formData.append(key, val as any);
+    });
+    if (careerFile) formData.append("careerPdf", careerFile);
+
+    const res = await axios.put("/api/member/update", formData, {
+      headers: { token: `Bearer ${token}` }
+    });
+    if (res.data === false) alert("수정에 실패했습니다.");
+  };
+
+  const handlePwSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pwValid || !pwMatch) return;
+    await handleUpdate({ password: pwForm.next });
     setPwForm({ current: "", next: "", confirm: "" });
     setPwSaved(true);
     setTimeout(() => setPwSaved(false), 3000);
   };
+
+  const handleWithdraw = async () => {
+    const res = await axios.delete("/api/member/delete", {
+      headers: { token: `Bearer ${token}` }
+    });
+    if (res.data === true) {
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
+  if (!userInfo) return null;
 
   return (
     <div className="space-y-6">
@@ -84,9 +113,7 @@ export function MyPage() {
         </div>
       )}
 
-      {/* 2열 그리드 - 담당자 정보 + 비밀번호 변경 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
         {/* 담당자 정보 */}
         <div className="bg-white rounded-xl shadow-sm border border-border">
           <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
@@ -99,46 +126,42 @@ export function MyPage() {
             </div>
           </div>
           <div className="p-5 space-y-4">
-            {/* 이메일 */}
             <div>
               <p className="text-[0.875rem] text-muted-foreground mb-1.5">이메일</p>
               <div className="px-4 py-3 rounded-xl bg-[#F0F0F0] text-muted-foreground text-[0.9375rem]">
-                {mockUser.email}
+                {userInfo.email}
               </div>
               <p className="text-[0.75rem] text-muted-foreground mt-1">이메일은 변경할 수 없습니다.</p>
             </div>
-            {/* 담당자 이름 */}
             <div>
-              <p className="text-[0.875rem] text-muted-foreground mb-1.5">담당자 이름</p>
+              <p className="text-[0.875rem] text-muted-foreground mb-1.5">부서명</p>
               <div className="flex items-center gap-2">
                 <div className="flex-1 px-4 py-3 rounded-xl bg-[#F8F9FA] border border-border text-[#2D2D2D] text-[0.9375rem]">
-                  {managerName}
+                  {party_name}
                 </div>
-                <button onClick={() => setEditing("name")} className="p-3 rounded-xl border border-border hover:bg-[#F8F9FA] text-muted-foreground hover:text-[#2D2D2D] transition-colors">
+                <button onClick={() => setEditing("party_name")} className="p-3 rounded-xl border border-border hover:bg-[#F8F9FA] text-muted-foreground hover:text-[#2D2D2D] transition-colors">
                   <Pencil className="w-4 h-4" />
                 </button>
               </div>
             </div>
-            {/* 연락처 */}
             <div>
               <p className="text-[0.875rem] text-muted-foreground mb-1.5">연락처</p>
               <div className="flex items-center gap-2">
                 <div className="flex-1 px-4 py-3 rounded-xl bg-[#F8F9FA] border border-border text-[#2D2D2D] text-[0.9375rem]">
-                  {phone}
+                  {company_number}
                 </div>
-                <button onClick={() => setEditing("phone")} className="p-3 rounded-xl border border-border hover:bg-[#F8F9FA] text-muted-foreground hover:text-[#2D2D2D] transition-colors">
+                <button onClick={() => setEditing("company_number")} className="p-3 rounded-xl border border-border hover:bg-[#F8F9FA] text-muted-foreground hover:text-[#2D2D2D] transition-colors">
                   <Pencil className="w-4 h-4" />
                 </button>
               </div>
             </div>
-            {/* 경력 증명서 */}
             <div>
               <p className="text-[0.875rem] text-muted-foreground mb-1.5">경력 증명서</p>
               <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[#F8F9FA] border border-dashed border-border">
                 <div className="flex items-center gap-2 min-w-0">
                   <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className={`text-[0.875rem] truncate ${careerFile ? "text-[#2D2D2D]" : "text-muted-foreground"}`}>
-                    {careerFile ? careerFile.name : "PDF 파일을 업로드하세요"}
+                    {careerFile ? careerFile.name : userInfo.careerFile ?? "PDF 파일을 업로드하세요"}
                   </span>
                 </div>
                 <button
@@ -149,7 +172,13 @@ export function MyPage() {
                   <Upload className="w-3.5 h-3.5" />업로드
                 </button>
                 <input ref={careerInputRef} type="file" accept=".pdf" className="hidden"
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) setCareerFile(f); }} />
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      setCareerFile(f);
+                      handleUpdate({});
+                    }
+                  }} />
               </div>
             </div>
           </div>
@@ -210,7 +239,7 @@ export function MyPage() {
         </div>
       </div>
 
-      {/* 기업 정보 - 전체 너비 */}
+      {/* 기업 정보 */}
       <div className="bg-white rounded-xl shadow-sm border border-border">
         <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
           <div className="w-8 h-8 rounded-lg bg-[#D8F3DC] flex items-center justify-center">
@@ -223,10 +252,10 @@ export function MyPage() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2">
           {[
-            { label: "기업명", value: mockCompany.companyName },
-            { label: "사업자등록번호", value: mockCompany.business_number },
-            { label: "대표자명", value: mockCompany.ceoName },
-            { label: "개업년월일", value: mockCompany.startDate },
+            { label: "기업명", value: userInfo.companyName },
+            { label: "사업자등록번호", value: userInfo.business_number },
+            { label: "대표자명", value: userInfo.ceoName },
+            { label: "개업년월일", value: userInfo.startDate },
           ].map((item, i) => (
             <div key={item.label} className={`px-5 py-4 border-b border-border ${i % 2 === 0 ? "sm:border-r" : ""}`}>
               <p className="text-[0.8125rem] text-muted-foreground mb-1">{item.label}</p>
@@ -235,13 +264,13 @@ export function MyPage() {
           ))}
           <div className="px-5 py-4 border-b border-border sm:col-span-2">
             <p className="text-[0.8125rem] text-muted-foreground mb-1">소재지</p>
-            <p className="text-[0.9375rem] text-[#2D2D2D]" style={{ fontWeight: 500 }}>{mockCompany.address}</p>
+            <p className="text-[0.9375rem] text-[#2D2D2D]" style={{ fontWeight: 500 }}>{userInfo.companyAddress}</p>
           </div>
           <div className="px-5 py-4 sm:col-span-2">
             <p className="text-[0.8125rem] text-muted-foreground mb-2">사업자등록증</p>
             <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[#F8F9FA] border border-border">
               <FileText className="w-4 h-4 text-muted-foreground" />
-              <span className="text-[0.875rem] text-muted-foreground">{mockCompany.businessLicense}</span>
+              <span className="text-[0.875rem] text-muted-foreground">{userInfo.businessLicense}</span>
             </div>
           </div>
         </div>
@@ -255,7 +284,7 @@ export function MyPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => navigate("/login")}
+            onClick={handleLogout}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-[0.875rem] text-[#2D2D2D] hover:bg-[#F8F9FA] transition-colors"
             style={{ fontWeight: 500 }}
           >
@@ -271,8 +300,16 @@ export function MyPage() {
         </div>
       </div>
 
-      {editing === "name" && <EditModal label="담당자 이름" initialValue={managerName} onSave={setManagerName} onClose={() => setEditing(null)} />}
-      {editing === "phone" && <EditModal label="연락처" initialValue={phone} onSave={setPhone} onClose={() => setEditing(null)} />}
+      {editing === "party_name" && (
+        <EditModal label="부서명" initialValue={party_name}
+          onSave={(v) => { setPartyName(v); handleUpdate({ party_name: v }); }}
+          onClose={() => setEditing(null)} />
+      )}
+      {editing === "company_number" && (
+        <EditModal label="연락처" initialValue={company_number}
+          onSave={(v) => { setCompanyNumber(v); handleUpdate({ company_number: v }); }}
+          onClose={() => setEditing(null)} />
+      )}
 
       {withdrawModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
@@ -284,7 +321,7 @@ export function MyPage() {
             <p className="text-[0.875rem] text-muted-foreground text-center mb-6">탈퇴 시 모든 데이터가 삭제되며<br />복구할 수 없습니다.</p>
             <div className="flex gap-3">
               <button onClick={() => setWithdrawModal(false)} className="flex-1 py-3 rounded-xl border border-border text-[0.9375rem] text-[#2D2D2D] hover:bg-[#F8F9FA] transition-colors" style={{ fontWeight: 500 }}>취소</button>
-              <button onClick={() => navigate("/login")} className="flex-1 py-3 rounded-xl bg-destructive text-white text-[0.9375rem] hover:opacity-90 transition-opacity" style={{ fontWeight: 600 }}>탈퇴</button>
+              <button onClick={handleWithdraw} className="flex-1 py-3 rounded-xl bg-destructive text-white text-[0.9375rem] hover:opacity-90 transition-opacity" style={{ fontWeight: 600 }}>탈퇴</button>
             </div>
           </div>
         </div>

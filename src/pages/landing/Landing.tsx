@@ -229,7 +229,7 @@ export function Landing() {
               로그인
             </button>
             <button
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/select-register")}
               className="px-5 py-2.5 bg-[#2D6A4F] text-white rounded-xl hover:bg-[#235c43] transition-all shadow-lg shadow-[#2D6A4F]/25 hover:shadow-[#2D6A4F]/40 text-[0.9rem]"
               style={{ fontWeight: 600 }}
             >
@@ -294,7 +294,7 @@ export function Landing() {
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <button
-                    onClick={() => navigate("/signup")}
+                    onClick={() => navigate("/select-register")}
                     className="group px-8 py-4 bg-[#52B788] text-white rounded-2xl hover:bg-[#40a578] transition-all shadow-xl shadow-[#52B788]/30 hover:shadow-[#52B788]/50 text-[1.05rem] flex items-center gap-2"
                     style={{ fontWeight: 600 }}
                   >
