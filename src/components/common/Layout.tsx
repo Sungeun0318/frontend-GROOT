@@ -17,8 +17,6 @@ import {
 } from "lucide-react";
 import { GrootLogo } from "@/components/common/GrootLogo";
 
-const isAdmin = Number(localStorage.getItem("isAdmin")) === 1;
-
 const navItems = [
   { to: "/dashboard", label: "대시보드", icon: LayoutDashboard },
   { to: "/recommend", label: "수목 추천 · 신청", icon: TreePine },
