@@ -17,23 +17,32 @@ import {
 } from "lucide-react";
 import { GrootLogo } from "@/components/common/GrootLogo";
 
-const navItems = [
-  { to: "/dashboard", label: "대시보드", icon: LayoutDashboard },
-  { to: "/recommend", label: "수목 추천 · 신청", icon: TreePine },
-  { to: "/applications", label: "신청 현황", icon: ClipboardList },
-  { to: "/trees", label: "나무 목록", icon: Trees },
-  { to: "/carbon", label: "탄소 현황", icon: BarChart3 },
-  { to: "/certification", label: "인증마크", icon: Award },
-  { to: "/esg-report", label: "ESG 보고서", icon: FileText },
-  { to: "/expert-report", label: "전문가 보고서", icon: ClipboardCheck },
-  ...(isAdmin ? [{ to: "/admin", label: "관리자", icon: ShieldCheck }] : []),
-  { to: "/mypage", label: "마이페이지", icon: UserCircle },
-];
+function getNavItems(isAdmin: boolean) {
+  return [
+    { to: "/dashboard", label: "대시보드", icon: LayoutDashboard },
+    { to: "/recommend", label: "수목 추천", icon: TreePine },
+    { to: "/applications", label: "답사 신청 현황", icon: ClipboardList },
+    { to: "/trees", label: "나무 목록", icon: Trees },
+    { to: "/carbon", label: "탄소 현황", icon: BarChart3 },
+    { to: "/certification", label: "인증마크", icon: Award },
+    { to: "/esg-report", label: "ESG 보고서", icon: FileText },
+    { to: "/expert-report", label: "전문가 보고서", icon: ClipboardCheck },
+    ...(isAdmin ? [
+      { to: "/admin", label: "관리자", icon: ShieldCheck },
+    ] : []),
+    { to: "/mypage", label: "마이페이지", icon: UserCircle },
+  ];
+}
 
 export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // TODO: 로그인 연동 후 토큰에서 isAdmin 값을 읽어오기
+  // 지금은 true로 해서 관리자 메뉴가 항상 보이게 함
+  const isAdmin = true;
+  const navItems = getNavItems(isAdmin);
 
   // Landing, login, signup pages don't use sidebar layout
   if (["/", "/login", "/signup" ,"/company-register", "/select-register"].includes(location.pathname)) {
