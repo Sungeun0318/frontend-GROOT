@@ -12,6 +12,8 @@ import { AdminPage, ExpertSchedule } from "@/pages/admin";
 import { LogoShowcase } from "@/pages/brand";
 import { NotFound } from "@/components/common";
 import { MyPage } from "@/pages/mypage";
+import { CompanyRegister } from "@/pages/auth";
+import { SelectRegister } from "@/pages/auth";
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +37,8 @@ export const router = createBrowserRouter([
       { path: "admin/schedules", Component: ExpertSchedule },
       { path: "brand", Component: LogoShowcase },
       { path: "*", Component: NotFound },
+      { path: "company-register", Component: CompanyRegister },
+      { path: "select-register", Component: SelectRegister },
     ],
   },
 ]);
