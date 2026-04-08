@@ -35,7 +35,7 @@ export const router = createBrowserRouter([
       { path: "admin", Component: AdminPage },
       { path: "admin/schedules", Component: ExpertSchedule },
       { path: "brand", Component: LogoShowcase },
-      { path: "api/applications", Component: Application },
+      //{ path: "api/applications", Component: Application },
       { path: "*", Component: NotFound },
     ],
   },
