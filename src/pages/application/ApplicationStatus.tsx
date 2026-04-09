@@ -81,7 +81,7 @@ console.log("답사 신청 목록:", data);
               {applications.map((app) => (
                 <tr key={app.detailId} className="border-b border-border hover:bg-[#F8F9FA] transition-colors">
                   <td className="px-5 py-4 text-[0.875rem]" style={{ fontWeight: 500 }}>{app.times}차</td>
-                  <td className="px-5 py-4 text-[0.875rem]">{app.dueStartDate}</td>
+                  <td className="px-5 py-4 text-[0.875rem]">{app.createDate && new Date(app.createDate).toLocaleDateString()}</td>
                   <td className="px-5 py-4 text-[0.875rem] max-w-[260px] truncate">{app.content}</td>
                   <td className="px-5 py-4 text-[0.875rem] text-muted-foreground">{app.expertId}</td>
                   <td className="px-5 py-4">
@@ -111,7 +111,8 @@ console.log("답사 신청 목록:", data);
             <div className="p-6 space-y-5">
               <div className="grid grid-cols-2 gap-4 text-[0.875rem]">
                 <div><span className="text-muted-foreground">차수</span><p style={{ fontWeight: 500 }}>{app.times}차</p></div>
-                <div><span className="text-muted-foreground">신청일</span><p style={{ fontWeight: 500 }}>{app.dueStartDate}</p></div>
+                <div><span className="text-muted-foreground">답사시작일</span><p style={{ fontWeight: 500 }}>{app.dueStartDate}</p></div>
+                <div><span className="text-muted-foreground">답사종료일</span><p style={{ fontWeight: 500 }}>{app.dueEndDate}</p></div>
                 <div className="col-span-2"><span className="text-muted-foreground">신청 내용</span><p style={{ fontWeight: 500 }}>{app.content}</p></div>
                 <div><span className="text-muted-foreground">담당 전문가</span><p style={{ fontWeight: 500 }}>{app.expertId}</p></div>
                 <div><span className="text-muted-foreground">상태</span><p style={{ fontWeight: 500 }}>{app.surveyStatus}</p></div>
