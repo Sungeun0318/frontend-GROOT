@@ -42,7 +42,7 @@ export function SignUp() {
     if (careerPdf) formData.append("careerPdf", careerPdf);
 
     try {
-      const res = await axios.post("/api/member/signup", formData);
+      const res = await axios.post("http://localhost:8080/api/member/signup", formData);
       if (res.data === false) {
         alert("회원가입에 실패했습니다.");
         return;
