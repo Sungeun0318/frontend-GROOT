@@ -56,6 +56,7 @@ export function ApplicationForm() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">희망 답사일</span>
                 <span style={{ fontWeight: 500 }}>{dueDate}</span>
+                
               </div>
             </div>
           </div>
