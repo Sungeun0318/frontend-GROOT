@@ -1,18 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router";
 import { Leaf, Eye, EyeOff } from "lucide-react";
 import { GrootLogo } from "@/components/common";
+import axios from "axios";
 
 export function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [mname, setMname] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/dashboard");
+
+    try {
+      const res = await axios.post("/api/member/login", {
+        mname,
+        password,
+      });
+      if (res.data === false) {
+        alert("로그인에 실패했습니다.");
+        return;
+      }
+      const token = res.headers["authorization"];
+      localStorage.setItem("token", token);
+
+      const payload = JSON.parse(atob(token.replace("Bearer ", "").split(".")[1]));
+      localStorage.setItem("isAdmin", payload.is_admin);
+      navigate("/dashboard");
+    } catch (err) {
+      alert("로그인에 실패했습니다.");
+    }
   };
+
+  useEffect(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("isAdmin");
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center px-4">
@@ -27,14 +51,14 @@ export function Login() {
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm p-8 space-y-5">
           <div>
-            <label className="block text-[0.875rem] text-[#2D2D2D] mb-1.5">이메일</label>
+            <label className="block text-[0.875rem] text-[#2D2D2D] mb-1.5">아이디</label>
             <input
-              type="email"
+              type="text"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={mname}
+              onChange={(e) => setMname(e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] border border-border focus:ring-2 focus:ring-[#52B788] focus:border-transparent outline-none"
-              placeholder="example@company.com"
+              placeholder="아이디"
             />
           </div>
 
@@ -73,7 +97,7 @@ export function Login() {
 
           <p className="text-center text-[0.875rem] text-muted-foreground">
             아직 계정이 없으신가요?{" "}
-            <Link to="/signup" className="text-[#2D6A4F] hover:underline" style={{ fontWeight: 500 }}>회원가입</Link>
+            <Link to="/select-register" className="text-[#2D6A4F] hover:underline" style={{ fontWeight: 500 }}>회원가입</Link>
           </p>
         </form>
       </div>

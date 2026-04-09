@@ -13,7 +13,7 @@ const companies = [
   { id: 8, name: "클린에어테크", address: "부산광역시 해운대구 센텀중앙로 97", trees: 95, carbon: "3,450 kg", lat: 35.1696, lng: 129.1313, grade: "새싹 🌿" },
   { id: 9, name: "바이오그린", address: "대전광역시 유성구 대학로 99", trees: 267, carbon: "9,780 kg", lat: 36.3626, lng: 127.3566, grade: "숲 🌳" },
   { id: 10, name: "서울환경", address: "서울특별시 마포구 월드컵북로 396", trees: 512, carbon: "18,900 kg", lat: 37.5665, lng: 126.9002, grade: "산림 🏔️" },
-];
+]
 
 // 나무 타입 
 type TreePoint = {
