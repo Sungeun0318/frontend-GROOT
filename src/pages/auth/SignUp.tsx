@@ -100,8 +100,8 @@ export function SignUp() {
               <input
                 type="text"
                 required
-                value={form.mname}
-                onChange={(e) => handleChange("mname", e.target.value)}
+                value={form.party_name}
+                onChange={(e) => handleChange("party_name", e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] border border-border focus:ring-2 focus:ring-[#52B788] focus:border-transparent outline-none"
                 placeholder="홍길동"
               />
@@ -123,8 +123,8 @@ export function SignUp() {
             <label className="block text-[0.875rem] text-[#2D2D2D] mb-1.5">아이디</label>
             <input
               type="text"
-              value={form.party_name}
-              onChange={(e) => handleChange("party_name", e.target.value)}
+              value={form.mname}
+              onChange={(e) => handleChange("mname", e.target.value)}
               className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] border border-border focus:ring-2 focus:ring-[#52B788] focus:border-transparent outline-none"
               placeholder="로그인에 사용할 아이디"
             />
