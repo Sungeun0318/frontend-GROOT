@@ -1,23 +1,34 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { X, Phone, CheckCircle, Circle, Plus } from "lucide-react";
-
-const applications = [
-  { id: 1, date: "2025.03.12", content: "본사 앞 녹지 조성 답사 요청", status: "신청", statusColor: "#EAB308", statusEmoji: "🟡", expert: "-", times: 1 },
-  { id: 2, date: "2025.02.28", content: "공장 부지 수목 식재 현장 답사", status: "진행중", statusColor: "#3B82F6", statusEmoji: "🔵", expert: "김전문", times: 2 },
-  { id: 3, date: "2025.01.15", content: "사옥 옥상 녹화 현장 답사", status: "완료", statusColor: "#22C55E", statusEmoji: "🟢", expert: "이전문", times: 3 },
-  { id: 4, date: "2024.11.20", content: "주차장 주변 녹지 조성 답사", status: "완료", statusColor: "#22C55E", statusEmoji: "🟢", expert: "이전문", times: 2 },
-  { id: 5, date: "2024.09.05", content: "연구소 정원 수목 관리 현장 점검", status: "진행중", statusColor: "#3B82F6", statusEmoji: "🔵", expert: "박전문", times: 1 },
-];
+import axios from "axios";
 
 const timelineSteps = ["신청", "전문가 배정", "답사 진행", "완료"];
 
 export function ApplicationStatus() {
-  const navigate = useNavigate();
+  const [ applications, setApplications] = useState([]);
+
+  const findAll = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:8080/api/admin/visits",
+        
+        //"http://localhost:8080/api/applications/visit",
+        // {headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }}
+        // 로그인 기능 구현된 후에 토큰 추가
+      );
+      const data = response.data;
+setApplications(data);
+console.log("답사 신청 목록:", data);
+    }catch (error) {
+      console.error("답사 신청 목록 조회 실패:", error);
+    }
+  }
+      const navigate = useNavigate();
   const [selectedApp, setSelectedApp] = useState<number | null>(null);
 
-  const getStepIndex = (status: string) => {
-    switch (status) {
+  const getStepIndex = (surveyStatus: string) => {
+    switch (surveyStatus) {
       case "신청": return 0;
       case "진행중": return 2;
       case "완료": return 3;
@@ -25,7 +36,19 @@ export function ApplicationStatus() {
     }
   };
 
-  const app = applications.find((a) => a.id === selectedApp);
+  useEffect(() => {
+    findAll();
+  }, []);
+
+  
+  if(applications.length === 0) {
+    return (<div>
+      <p>답사신청내역 없음</p>
+    </div>
+    )
+  }
+
+  const app = applications.find( (a) => a.detailId === selectedApp);
 
   return (
     <div className="space-y-6">
@@ -56,18 +79,18 @@ export function ApplicationStatus() {
             </thead>
             <tbody>
               {applications.map((app) => (
-                <tr key={app.id} className="border-b border-border hover:bg-[#F8F9FA] transition-colors">
+                <tr key={app.detailId} className="border-b border-border hover:bg-[#F8F9FA] transition-colors">
                   <td className="px-5 py-4 text-[0.875rem]" style={{ fontWeight: 500 }}>{app.times}차</td>
-                  <td className="px-5 py-4 text-[0.875rem]">{app.date}</td>
+                  <td className="px-5 py-4 text-[0.875rem]">{app.dueStartDate}</td>
                   <td className="px-5 py-4 text-[0.875rem] max-w-[260px] truncate">{app.content}</td>
-                  <td className="px-5 py-4 text-[0.875rem] text-muted-foreground">{app.expert}</td>
+                  <td className="px-5 py-4 text-[0.875rem] text-muted-foreground">{app.expertId}</td>
                   <td className="px-5 py-4">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[0.75rem]" style={{ fontWeight: 500, backgroundColor: app.statusColor + "15", color: app.statusColor }}>
-                      {app.statusEmoji} {app.status}
+                      {app.statusEmoji} {app.surveyStatus}
                     </span>
                   </td>
                   <td className="px-5 py-4">
-                    <button onClick={() => setSelectedApp(app.id)} className="text-[0.875rem] text-[#2D6A4F] hover:underline" style={{ fontWeight: 500 }}>
+                    <button onClick={() => setSelectedApp(app.detailId)} className="text-[0.875rem] text-[#2D6A4F] hover:underline" style={{ fontWeight: 500 }}>
                       상세보기
                     </button>
                   </td>
@@ -88,17 +111,17 @@ export function ApplicationStatus() {
             <div className="p-6 space-y-5">
               <div className="grid grid-cols-2 gap-4 text-[0.875rem]">
                 <div><span className="text-muted-foreground">차수</span><p style={{ fontWeight: 500 }}>{app.times}차</p></div>
-                <div><span className="text-muted-foreground">신청일</span><p style={{ fontWeight: 500 }}>{app.date}</p></div>
+                <div><span className="text-muted-foreground">신청일</span><p style={{ fontWeight: 500 }}>{app.dueStartDate}</p></div>
                 <div className="col-span-2"><span className="text-muted-foreground">신청 내용</span><p style={{ fontWeight: 500 }}>{app.content}</p></div>
-                <div><span className="text-muted-foreground">담당 전문가</span><p style={{ fontWeight: 500 }}>{app.expert}</p></div>
-                <div><span className="text-muted-foreground">상태</span><p style={{ fontWeight: 500 }}>{app.status}</p></div>
+                <div><span className="text-muted-foreground">담당 전문가</span><p style={{ fontWeight: 500 }}>{app.expertId}</p></div>
+                <div><span className="text-muted-foreground">상태</span><p style={{ fontWeight: 500 }}>{app.surveyStatus}</p></div>
               </div>
 
               <div>
                 <h4 className="text-[0.875rem] mb-4" style={{ fontWeight: 600 }}>진행 단계</h4>
                 <div className="flex items-center">
                   {timelineSteps.map((step, i) => {
-                    const currentStep = getStepIndex(app.status);
+                    const currentStep = getStepIndex(app.surveyStatus);
                     const done = i <= currentStep;
                     return (
                       <div key={step} className="flex-1 flex flex-col items-center relative">
