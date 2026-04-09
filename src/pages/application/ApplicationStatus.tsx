@@ -11,10 +11,10 @@ export function ApplicationStatus() {
   const findAll = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8080/api/admin/visits",
+        //"http://localhost:8080/api/admin/visits",
         
-        //"http://localhost:8080/api/applications/visit",
-        // {headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }}
+        "http://localhost:8080/api/applications/visit",
+        {headers: { Authorization: `${localStorage.getItem("token")}` }}
         // 로그인 기능 구현된 후에 토큰 추가
       );
       const data = response.data;
@@ -83,7 +83,7 @@ console.log("답사 신청 목록:", data);
                   <td className="px-5 py-4 text-[0.875rem]" style={{ fontWeight: 500 }}>{app.times}차</td>
                   <td className="px-5 py-4 text-[0.875rem]">{app.createDate && new Date(app.createDate).toLocaleDateString()}</td>
                   <td className="px-5 py-4 text-[0.875rem] max-w-[260px] truncate">{app.content}</td>
-                  <td className="px-5 py-4 text-[0.875rem] text-muted-foreground">{app.expertId}</td>
+                  <td className="px-5 py-4 text-[0.875rem] text-muted-foreground">{app.expertName}</td>
                   <td className="px-5 py-4">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[0.75rem]" style={{ fontWeight: 500, backgroundColor: app.statusColor + "15", color: app.statusColor }}>
                       {app.statusEmoji} {app.surveyStatus}

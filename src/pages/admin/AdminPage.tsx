@@ -265,12 +265,12 @@ export function AdminPage() {
                 <thead>
                   <tr className="bg-gray-50 text-[0.75rem] text-gray-500 uppercase tracking-wider" style={{ fontWeight: 600 }}>
                     <th className="text-left px-5 py-3">답사번호</th>
-                    <th className="text-left px-5 py-3">기업명/지점명</th>
+                    <th className="text-left px-5 py-3">기업명</th>
+                    <th className="text-left px-5 py-3">답사시작일</th>
+                    <th className="text-left px-5 py-3">답사종료일</th>
                     <th className="text-left px-5 py-3">차수</th>
                     <th className="text-left px-5 py-3">신청내용</th>
                     <th className="text-left px-5 py-3">기업담당자</th>
-                    <th className="text-left px-5 py-3">상태</th>
-                    <th className="text-left px-5 py-3">처리</th>
                   </tr>
                 </thead>
                 <tbody>
