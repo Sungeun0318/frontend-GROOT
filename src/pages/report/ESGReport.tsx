@@ -37,14 +37,16 @@ export function ESGReport() {
 
   const fetchReportPreview = async () => {
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = localStorage.getItem("token");
+
+      console.log("token:", token);
 
       const response = await axios.get<ReportPreviewDTO>(
-        "http://localhost:8080/api/reports",
+        `http://localhost:8080/api/reports`,
         {
           params: { times: selectedTimes },
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `${token}`,
           },
         }
       );
