@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 
 import {
@@ -81,6 +82,7 @@ const previousRoundData: InspectionRound[] = [
         latitude: "",
         longitude: "",
       },
+      
       {
         id: "0-2",
         species: "편백나무",
