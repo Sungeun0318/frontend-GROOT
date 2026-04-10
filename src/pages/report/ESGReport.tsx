@@ -54,7 +54,7 @@ export function ESGReport() {
 
   useEffect(() => {
     fetchReportPreview();
-  }, [selectedTimes]);
+  }, [selectedTimes])
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
