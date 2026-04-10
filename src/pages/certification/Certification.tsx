@@ -39,7 +39,7 @@ export function Certification() {
               </div>
               <div>
                 <p className="text-white/60 text-[0.75rem]">다음 등급까지</p>
-                <p className="text-[1.25rem]" style={{ fontWeight: 600 }}>73그루</p>
+                <p className="text-[1.25rem]" style={{ fontWeight: 600 }}>1,000kg</p>
               </div>
             </div>
           </div>
