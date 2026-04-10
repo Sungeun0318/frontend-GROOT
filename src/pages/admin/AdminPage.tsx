@@ -161,8 +161,8 @@ export function AdminPage() {
         {[
           { key: "members" as const, label: "회원가입 승인" },
           { key: "companyRequests" as const, label: "기업등록 승인" },
-          { key: "applications" as const, label: "신청 관리" },
           { key: "companies" as const, label: "기업 현황" },
+          { key: "applications" as const, label: "답사 관리" },
         ].map((t) => (
           <button
             key={t.key}
@@ -272,10 +272,9 @@ export function AdminPage() {
             {(
               [
                 { key: "all", label: "전체" },
-                { key: "pending", label: "대기" },
-                { key: "reviewing", label: "검토중" },
-                { key: "approved", label: "승인" },
-                { key: "rejected", label: "반려" },
+                { key: "pending", label: "답사예정" },
+                { key: "reviewing", label: "답사중" },
+                { key: "approved", label: "답사완료" }
               ] as const
             ).map((f) => (
               <button
@@ -303,13 +302,13 @@ export function AdminPage() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 text-[0.75rem] text-gray-500 uppercase tracking-wider" style={{ fontWeight: 600 }}>
-                    <th className="text-left px-5 py-3">신청번호</th>
+                    <th className="text-left px-5 py-3">답사번호</th>
                     <th className="text-left px-5 py-3">기업명</th>
-                    <th className="text-left px-5 py-3">수종</th>
-                    <th className="text-left px-5 py-3">수량</th>
-                    <th className="text-left px-5 py-3">위치</th>
-                    <th className="text-left px-5 py-3">상태</th>
-                    <th className="text-left px-5 py-3">처리</th>
+                    <th className="text-left px-5 py-3">답사시작일</th>
+                    <th className="text-left px-5 py-3">답사종료일</th>
+                    <th className="text-left px-5 py-3">차수</th>
+                    <th className="text-left px-5 py-3">신청내용</th>
+                    <th className="text-left px-5 py-3">기업담당자</th>
                   </tr>
                 </thead>
                 <tbody>

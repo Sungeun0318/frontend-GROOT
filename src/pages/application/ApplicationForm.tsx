@@ -8,29 +8,50 @@ import {
   Info,
   Send,
 } from "lucide-react";
+import axios from "axios";
 
 export function ApplicationForm() {
   const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
 
   const [content, setContent] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  const [dueStartDate, setDueStartDate] = useState("");
+  const [dueEndDate, setDueEndDate] = useState("");
 
-  const canSubmit = content.trim() !== "" && dueDate !== "";
+  const canSubmit = content.trim() !== "" && dueStartDate !== "";
 
-  const handleSubmit = () => {
-    if (!canSubmit) return;
+  const handleSubmit = async() => {
+     const token = localStorage.getItem( 'token' );
+    // [1] 입력받은 값 가져오기
+
+    // [2] 전송할 정보 객체 
+    const obj = {content, dueStartDate, dueEndDate}
+
+    // [3] 
+    const response = await axios.post("http://localhost:8080/api/applications/visit", obj,
+       { headers : { Authorization : `${token}`} } // HTTP 요청 HEADER 
+    )
+    const data = response.data;
+    
+    //[4] 
+    if( data ){
+      alert("답사등록성공")
+    }else{ alert("답사등록실패")
+    }
+
+    
 
     // TODO: axios 연동
     // const token = localStorage.getItem("token");
     // const res = await axios.post("/api/applications/visit", { content, dueDate }, {
     //   headers: { Authorization: token },
     // });
-
+    
+    
     setSubmitted(true);
   };
 
-  if (submitted) {
+  if (submitted) {// 답사완료 되었을 때 화면
     return (
       <div className="space-y-6 max-w-2xl mx-auto">
         <div className="bg-white rounded-xl shadow-sm border border-border p-10 text-center">
@@ -54,8 +75,12 @@ export function ApplicationForm() {
                 <span style={{ fontWeight: 500 }}>{content}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">희망 답사일</span>
-                <span style={{ fontWeight: 500 }}>{dueDate}</span>
+                <span className="text-muted-foreground">답사 시작일</span>
+                <span style={{ fontWeight: 500 }}>{dueStartDate}</span>
+              </div>
+                <div className="flex justify-between">
+                <span className="text-muted-foreground">답사 종료일</span>
+                <span style={{ fontWeight: 500 }}>{dueEndDate}</span>
               </div>
             </div>
           </div>
@@ -72,7 +97,7 @@ export function ApplicationForm() {
               onClick={() => {
                 setSubmitted(false);
                 setContent("");
-                setDueDate("");
+                setDueStartDate("");
               }}
               className="flex-1 py-3 rounded-xl bg-[#2D6A4F] text-white text-[0.9375rem] hover:bg-[#235c43] transition-colors"
               style={{ fontWeight: 600 }}
@@ -85,7 +110,7 @@ export function ApplicationForm() {
     );
   }
 
-  return (
+  return ( // 답사 신청하기 전
     <div className="space-y-6 max-w-2xl mx-auto">
       {/* 헤더 */}
       <div className="flex items-center gap-3">
@@ -145,17 +170,34 @@ export function ApplicationForm() {
           <div>
             <label className="flex items-center gap-2 text-[0.875rem] text-[#2D2D2D] mb-2" style={{ fontWeight: 600 }}>
               <CalendarDays className="w-4 h-4 text-[#2D6A4F]" />
-              희망 답사일
+              답사 시작일
               <span className="text-[#EF4444] text-[0.75rem]">*필수</span>
             </label>
             <input
               type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
+              value={dueStartDate}
+              onChange={(e) => setDueStartDate(e.target.value)}
               min={new Date().toISOString().split("T")[0]}
               className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] border border-border focus:ring-2 focus:ring-[#52B788] focus:border-transparent outline-none text-[0.9375rem]"
             />
           </div>
+
+           {/* 희망 답사일 */}
+          <div>
+            <label className="flex items-center gap-2 text-[0.875rem] text-[#2D2D2D] mb-2" style={{ fontWeight: 600 }}>
+              <CalendarDays className="w-4 h-4 text-[#2D6A4F]" />
+              답사 종료일
+              <span className="text-[#EF4444] text-[0.75rem]">*필수</span>
+            </label>
+            <input
+              type="date"
+              value={dueEndDate}
+              onChange={(e) => setDueEndDate(e.target.value)}
+              min={new Date().toISOString().split("T")[0]}
+              className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] border border-border focus:ring-2 focus:ring-[#52B788] focus:border-transparent outline-none text-[0.9375rem]"
+            />
+          </div>
+
         </div>
       </div>
 
