@@ -11,12 +11,7 @@ import {
   Send,
   CheckCircle2,
   FileText,
-  Leaf,
-  CloudSun,
-  Droplets,
-  ThermometerSun,
   Save,
-  X,
   ChevronDown,
 } from "lucide-react";
 
@@ -24,9 +19,10 @@ import {
 interface TreeMeasurement {
   id: string;
   species: string;
-  dbh: string; // 흉고직경 (cm)
-  height: string; // 수고 (m)
-  crownWidth: string; // 수관폭 (m)
+  kind: "broadleaf" | "conifer"; 
+  dbh: string;
+  height: string;
+  crownWidth: string;
   health: "excellent" | "good" | "fair" | "poor";
   image: string;
   latitude: string;
@@ -76,6 +72,7 @@ const previousRoundData: InspectionRound[] = [
       {
         id: "0-1",
         species: "편백나무",
+        kind: "conifer",
         dbh: "14.2",
         height: "5.0",
         crownWidth: "2.0",
@@ -87,6 +84,7 @@ const previousRoundData: InspectionRound[] = [
       {
         id: "0-2",
         species: "편백나무",
+        kind: "conifer",
         dbh: "13.8",
         height: "4.8",
         crownWidth: "1.9",
@@ -98,6 +96,7 @@ const previousRoundData: InspectionRound[] = [
       {
         id: "0-3",
         species: "편백나무",
+        kind: "conifer",
         dbh: "10.7",
         height: "3.9",
         crownWidth: "1.6",
@@ -114,6 +113,7 @@ const previousRoundData: InspectionRound[] = [
       {
         id: "1-1",
         species: "편백나무",
+        kind: "conifer",
         dbh: "16.4",
         height: "5.7",
         crownWidth: "2.3",
@@ -125,6 +125,7 @@ const previousRoundData: InspectionRound[] = [
       {
         id: "1-2",
         species: "편백나무",
+        kind: "conifer",
         dbh: "15.1",
         height: "5.3",
         crownWidth: "2.2",
@@ -136,6 +137,7 @@ const previousRoundData: InspectionRound[] = [
       {
         id: "1-3",
         species: "편백나무",
+        kind: "conifer",
         dbh: "11.5",
         height: "4.2",
         crownWidth: "1.8",
@@ -153,24 +155,45 @@ export function ExpertReport() {
   const [selectedRound, setSelectedRound] = useState<string>("");
 
   const [measurements, setMeasurements] = useState<TreeMeasurement[]>([
-    {
-      id: "1", species: "편백나무", dbh: "18.5", height: "6.2", crownWidth: "2.8", health: "excellent", image: "", latitude: "",
-      longitude: ""
-    },
-    {
-      id: "2", species: "편백나무", dbh: "16.2", height: "5.8", crownWidth: "2.4", health: "good", image: "", latitude: "",
-      longitude: ""
-    },
-    {
-      id: "3", species: "편백나무", dbh: "12.0", height: "4.5", crownWidth: "1.9", health: "fair", image: "", latitude: "",
-      longitude: ""
-    },
-  ]);
+  {
+    id: "1",
+    species: "편백나무",
+    kind: "conifer",
+    dbh: "18.5",
+    height: "6.2",
+    crownWidth: "2.8",
+    health: "excellent",
+    image: "",
+    latitude: "",
+    longitude: ""
+  },
+  {
+    id: "2",
+    species: "편백나무",
+    kind : "conifer",
+    dbh: "16.2",
+    height: "5.8",
+    crownWidth: "2.4",
+    health: "good",
+    image: "",
+    latitude: "",
+    longitude: ""
+  },
+  {
+    id: "3",
+    species: "편백나무",
+    kind: "conifer",
+    dbh: "12.0",
+    height: "4.5",
+    crownWidth: "1.9",
+    health: "fair",
+    image: "",
+    latitude: "",
+    longitude: ""
+  },
+]);
 
-  const [weather, setWeather] = useState({ condition: "맑음", temp: "14", humidity: "55" });
-  const [soilType, setSoilType] = useState("사양토");
-  const [slopeAngle, setSlopeAngle] = useState("12");
-  const [drainageGrade, setDrainageGrade] = useState("양호");
+
   const [overallNote, setOverallNote] = useState(
     "전반적으로 식재 상태가 양호하며, 활착률은 약 95%로 추정됩니다. 일부 배수 불량 구간(남동쪽 저지대)에서 하엽 황변이 관찰되어 배수로 정비가 필요합니다. 차기 답사 시 생장량 비교 측정 권장합니다."
   );
@@ -187,21 +210,22 @@ export function ExpertReport() {
   );
 
   const addMeasurement = () => {
-    setMeasurements((prev) => [
-      ...prev,
-      {
-        id: String(Date.now()),
-        species: "편백나무",
-        dbh: "",
-        height: "",
-        crownWidth: "",
-        health: "good",
-        image: "",
-        latitude: "",
-        longitude: "",
-      },
-    ]);
-  };
+  setMeasurements((prev) => [
+    ...prev,
+    {
+      id: String(Date.now()),
+      species: "편백나무",
+      kind: "conifer", // 추가
+      dbh: "",
+      height: "",
+      crownWidth: "",
+      health: "good",
+      image: "",
+      latitude: "",
+      longitude: "",
+    },
+  ]);
+};
 
   const removeMeasurement = (id: string) => {
     setMeasurements((prev) => prev.filter((m) => m.id !== id));
@@ -405,96 +429,7 @@ export function ExpertReport() {
         </div>
       </div>
 
-      {/* Site Conditions */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <h2 className="text-[1rem] text-gray-900 mb-4" style={{ fontWeight: 700 }}>
-          현장 환경 조건
-        </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <label className="flex items-center gap-1.5 text-[0.8rem] text-gray-500 mb-2" style={{ fontWeight: 600 }}>
-              <CloudSun className="w-3.5 h-3.5" /> 날씨
-            </label>
-            <select
-              value={weather.condition}
-              onChange={(e) => setWeather({ ...weather, condition: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-[0.9rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F] bg-white"
-            >
-              {["맑음", "흐림", "비", "눈", "안개"].map((w) => (
-                <option key={w}>{w}</option>
-              ))}
-            </select>
-          </div>
 
-          <div>
-            <label className="flex items-center gap-1.5 text-[0.8rem] text-gray-500 mb-2" style={{ fontWeight: 600 }}>
-              <ThermometerSun className="w-3.5 h-3.5" /> 기온 (°C)
-            </label>
-            <input
-              type="number"
-              value={weather.temp}
-              onChange={(e) => setWeather({ ...weather, temp: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-[0.9rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
-            />
-          </div>
-
-          <div>
-            <label className="flex items-center gap-1.5 text-[0.8rem] text-gray-500 mb-2" style={{ fontWeight: 600 }}>
-              <Droplets className="w-3.5 h-3.5" /> 습도 (%)
-            </label>
-            <input
-              type="number"
-              value={weather.humidity}
-              onChange={(e) => setWeather({ ...weather, humidity: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-[0.9rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
-            />
-          </div>
-
-          <div>
-            <label className="flex items-center gap-1.5 text-[0.8rem] text-gray-500 mb-2" style={{ fontWeight: 600 }}>
-              <Leaf className="w-3.5 h-3.5" /> 토양
-            </label>
-            <select
-              value={soilType}
-              onChange={(e) => setSoilType(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-[0.9rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F] bg-white"
-            >
-              {["사양토", "양토", "식양토", "사토", "식토", "점토"].map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mt-4">
-          <div>
-            <label className="text-[0.8rem] text-gray-500 mb-2 block" style={{ fontWeight: 600 }}>
-              경사도 (°)
-            </label>
-            <input
-              type="number"
-              value={slopeAngle}
-              onChange={(e) => setSlopeAngle(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-[0.9rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
-            />
-          </div>
-
-          <div>
-            <label className="text-[0.8rem] text-gray-500 mb-2 block" style={{ fontWeight: 600 }}>
-              배수 등급
-            </label>
-            <select
-              value={drainageGrade}
-              onChange={(e) => setDrainageGrade(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-[0.9rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F] bg-white"
-            >
-              {["매우양호", "양호", "보통", "불량", "매우불량"].map((d) => (
-                <option key={d}>{d}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
 
       {/* Tree Measurements */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
@@ -630,6 +565,26 @@ export function ExpertReport() {
 
                       <div>
                         <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                          수종 구분
+                        </label>
+                        <select
+                          value={m.kind}
+                          onChange={(e) =>
+                            updateMeasurement(
+                              m.id,
+                              "kind",
+                              e.target.value as TreeMeasurement["kind"]
+                            )
+                          }
+                          className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F] bg-white"
+                        >
+                          <option value="broadleaf">활엽수</option>
+                          <option value="conifer">침엽수</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
                           위도
                         </label>
                         <input
@@ -654,20 +609,6 @@ export function ExpertReport() {
                           placeholder="예: 127.148000"
                           className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
                         />
-                      </div>
-
-                      <div className="flex flex-col justify-end">
-                        <label className="text-[0.7rem] text-gray-400 mb-1 block invisible">
-                          위치 등록
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => setCurrentLocation(m.id)}
-                          className="w-full px-3 py-2 rounded-lg bg-blue-600 text-white text-[0.8rem] hover:bg-blue-700 transition-colors"
-                          style={{ fontWeight: 600 }}
-                        >
-                          내 위치 등록
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -709,7 +650,17 @@ export function ExpertReport() {
                     </label>
                   </div>
 
-                  
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentLocation(m.id)}
+                      className="px-3 py-2 rounded-lg bg-blue-600 text-white text-[0.8rem] hover:bg-blue-700 transition-colors"
+                      style={{ fontWeight: 600 }}
+                    >
+                      내 위치 등록
+                    </button>
+                  </div>
+
 
                   {/* Estimated CO2 for this tree */}
                   <div className="mt-3 flex items-center gap-2 text-[0.8rem] flex-wrap">

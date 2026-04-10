@@ -28,12 +28,7 @@ interface ReportPreviewDTO {
 
 export function ESGReport() {
   const [selectedTimes, setSelectedTimes] = useState<number>(1);
-
   const [reportPreview, setReportPreview] = useState<ReportPreviewDTO | null>(null);
-
-  const [includeSpecies, setIncludeSpecies] = useState(true);
-  const [includeCalc, setIncludeCalc] = useState(true);
-  const [includeMap, setIncludeMap] = useState(false);
 
   const fetchReportPreview = async () => {
     try {
@@ -93,47 +88,6 @@ export function ESGReport() {
                 onChange={(e) => setSelectedTimes(Number(e.target.value))}
                 className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FA] border border-border text-[0.875rem] outline-none focus:ring-2 focus:ring-[#52B788]"
               />
-            </div>
-
-            <div className="pt-2 border-t border-border">
-              <p className="text-[0.875rem] mb-3" style={{ fontWeight: 500 }}>
-                포함 항목
-              </p>
-
-              <div className="space-y-2.5">
-                {[
-                  {
-                    label: "수종별 내역",
-                    checked: includeSpecies,
-                    onChange: setIncludeSpecies,
-                  },
-                  {
-                    label: "계산 근거",
-                    checked: includeCalc,
-                    onChange: setIncludeCalc,
-                  },
-                  {
-                    label: "지도 포함",
-                    checked: includeMap,
-                    onChange: setIncludeMap,
-                  },
-                ].map((item) => (
-                  <label
-                    key={item.label}
-                    className="flex items-center gap-2.5 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={item.checked}
-                      onChange={(e) => item.onChange(e.target.checked)}
-                      className="w-4 h-4 rounded accent-[#2D6A4F]"
-                    />
-                    <span className="text-[0.875rem]" style={{ fontWeight: 400 }}>
-                      {item.label}
-                    </span>
-                  </label>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -258,70 +212,67 @@ export function ESGReport() {
                   </div>
                 </div>
               </div>
-              {includeSpecies && (
-                <div>
-                  <h3 className="text-[1rem] mb-3" style={{ fontWeight: 600 }}>
-                    수종별 상세 내역
-                  </h3>
 
-                  <table className="w-full text-[0.875rem]">
-                    <thead>
-                      <tr className="border-b border-border">
-                        {["수종", "수량", "탄소흡수량(kg)", "비율"].map((header) => (
-                          <th
-                            key={header}
-                            className="py-2 text-left text-muted-foreground"
-                            style={{ fontWeight: 500 }}
-                          >
-                            {header}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
+              <div>
+                <h3 className="text-[1rem] mb-3" style={{ fontWeight: 600 }}>
+                  수종별 상세 내역
+                </h3>
 
-                    <tbody>
-                      {reportPreview?.speciesDetail?.length ? (
-                        reportPreview.speciesDetail.map((species, index) => (
-                          <tr
-                            key={`${species.treeType}-${index}`}
-                            className="border-b border-border/50"
-                          >
-                            <td className="py-2">{species.treeType}</td>
-                            <td className="py-2">{species.count}그루</td>
-                            <td className="py-2">
-                              {species.carbonAbsorption.toLocaleString()}
-                            </td>
-                            <td className="py-2">{species.ratio.toFixed(1)}%</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td className="py-4 text-muted-foreground" colSpan={4}>
-                            수종 데이터가 없습니다.
+                <table className="w-full text-[0.875rem]">
+                  <thead>
+                    <tr className="border-b border-border">
+                      {["수종", "수량", "탄소흡수량(kg)", "비율"].map((header) => (
+                        <th
+                          key={header}
+                          className="py-2 text-left text-muted-foreground"
+                          style={{ fontWeight: 500 }}
+                        >
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {reportPreview?.speciesDetail?.length ? (
+                      reportPreview.speciesDetail.map((species, index) => (
+                        <tr
+                          key={`${species.treeType}-${index}`}
+                          className="border-b border-border/50"
+                        >
+                          <td className="py-2">{species.treeType}</td>
+                          <td className="py-2">{species.count}그루</td>
+                          <td className="py-2">
+                            {species.carbonAbsorption.toLocaleString()}
                           </td>
+                          <td className="py-2">{species.ratio.toFixed(1)}%</td>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      ))
+                    ) : (
+                      <tr>
+                        <td className="py-4 text-muted-foreground" colSpan={4}>
+                          수종 데이터가 없습니다.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
 
-              {includeCalc && (
-                <div className="border border-border rounded-xl p-4">
-                  <h3 className="text-[0.875rem] mb-2" style={{ fontWeight: 600 }}>
-                    계산 근거
-                  </h3>
-                  <p className="text-[0.75rem] text-muted-foreground">
-                    바이오매스 상대생장식: W = a × DBH^b
-                  </p>
-                  <p className="text-[0.75rem] text-muted-foreground">
-                    탄소전환계수: 0.4737 (국립산림과학원)
-                  </p>
-                  <p className="text-[0.75rem] text-muted-foreground">
-                    데이터 출처: 산림청, 국립산림과학원, 기상청
-                  </p>
-                </div>
-              )}
+              <div className="border border-border rounded-xl p-4">
+                <h3 className="text-[0.875rem] mb-2" style={{ fontWeight: 600 }}>
+                  계산 근거
+                </h3>
+                <p className="text-[0.75rem] text-muted-foreground">
+                  바이오매스 상대생장식: W = a × DBH^b
+                </p>
+                <p className="text-[0.75rem] text-muted-foreground">
+                  탄소전환계수: 0.4737 (국립산림과학원)
+                </p>
+                <p className="text-[0.75rem] text-muted-foreground">
+                  데이터 출처: 산림청, 국립산림과학원, 기상청
+                </p>
+              </div>
 
               <div className="flex justify-end pt-4">
                 <div className="w-28 h-28 rounded-full border-4 border-[#2D6A4F] flex flex-col items-center justify-center text-[#2D6A4F] rotate-[-10deg]">
