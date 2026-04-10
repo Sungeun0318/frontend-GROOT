@@ -30,8 +30,8 @@ console.log("답사 신청 목록:", data);
   const getStepIndex = (surveyStatus: string) => {
     switch (surveyStatus) {
       case "신청": return 0;
-      case "진행중": return 2;
-      case "완료": return 3;
+      case "진행중": return 1;
+      case "완료": return 2;
       default: return 0;
     }
   };
