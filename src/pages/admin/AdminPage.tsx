@@ -18,7 +18,7 @@ import {
   User,
 } from "lucide-react";
 
-type AppStatus = "pending" | "reviewing" | "approved" | "rejected";
+type AppStatus = "신청" | "진행중" | "완료" | "rejected";
 
 interface Application {
   id: string;
@@ -29,20 +29,20 @@ interface Application {
   date: string;
   status: AppStatus;
 }
-
+// 답사관리 샘플데이터
 const mockApps: Application[] = [
-  { id: "APP-0318", company: "그린테크(주)", species: "소나무 외 2종", qty: 120, location: "경기 용인", date: "2026-03-18", status: "pending" },
-  { id: "APP-0317", company: "에코솔루션", species: "참나무 외 1종", qty: 80, location: "충남 천안", date: "2026-03-17", status: "reviewing" },
-  { id: "APP-0316", company: "한국에너지공사", species: "편백나무", qty: 200, location: "전북 전주", date: "2026-03-16", status: "approved" },
-  { id: "APP-0315", company: "동아제약", species: "느티나무 외 2종", qty: 50, location: "경기 안산", date: "2026-03-15", status: "approved" },
+  { id: "APP-0318", company: "그린테크(주)", species: "소나무 외 2종", qty: 120, location: "경기 용인", date: "2026-03-18", status: "신청" },
+  { id: "APP-0317", company: "에코솔루션", species: "참나무 외 1종", qty: 80, location: "충남 천안", date: "2026-03-17", status: "진행중" },
+  { id: "APP-0316", company: "한국에너지공사", species: "편백나무", qty: 200, location: "전북 전주", date: "2026-03-16", status: "완료" },
+  { id: "APP-0315", company: "동아제약", species: "느티나무 외 2종", qty: 50, location: "경기 안산", date: "2026-03-15", status: "완료" },
   { id: "APP-0314", company: "그린빌딩(주)", species: "은행나무", qty: 30, location: "서울 강남", date: "2026-03-14", status: "rejected" },
-  { id: "APP-0312", company: "테크노파크", species: "소나무 외 1종", qty: 150, location: "대전 유성", date: "2026-03-12", status: "pending" },
+  { id: "APP-0312", company: "테크노파크", species: "소나무 외 1종", qty: 150, location: "대전 유성", date: "2026-03-12", status: "신청" },
 ];
 
 const statusMap: Record<AppStatus, { label: string; color: string; icon: any }> = {
-  pending: { label: "대기", color: "text-amber-700 bg-amber-50", icon: Clock },
-  reviewing: { label: "검토중", color: "text-blue-700 bg-blue-50", icon: Eye },
-  approved: { label: "승인", color: "text-emerald-700 bg-emerald-50", icon: CheckCircle2 },
+  신청: { label: "대기", color: "text-amber-700 bg-amber-50", icon: Clock },
+  진행중: { label: "검토중", color: "text-blue-700 bg-blue-50", icon: Eye },
+  완료: { label: "승인", color: "text-emerald-700 bg-emerald-50", icon: CheckCircle2 },
   rejected: { label: "반려", color: "text-red-700 bg-red-50", icon: XCircle },
 };
 
@@ -57,17 +57,17 @@ const companies = [
 
 // 추가된 mock 데이터
 const mockMembers = [
-  { id: "MEM-001", name: "김철수", email: "kim@greentech.co.kr", company: "그린테크(주)", phone: "010-1234-5678", date: "2026-03-19", status: "pending" },
-  { id: "MEM-002", name: "이영희", email: "lee@ecosolution.com", company: "에코솔루션", phone: "010-2345-6789", date: "2026-03-18", status: "pending" },
-  { id: "MEM-003", name: "박민준", email: "park@energy.co.kr", company: "한국에너지공사", phone: "010-3456-7890", date: "2026-03-17", status: "approved" },
+  { id: "MEM-001", name: "김철수", email: "kim@greentech.co.kr", company: "그린테크(주)", phone: "010-1234-5678", date: "2026-03-19", status: "신청" },
+  { id: "MEM-002", name: "이영희", email: "lee@ecosolution.com", company: "에코솔루션", phone: "010-2345-6789", date: "2026-03-18", status: "신청" },
+  { id: "MEM-003", name: "박민준", email: "park@energy.co.kr", company: "한국에너지공사", phone: "010-3456-7890", date: "2026-03-17", status: "완료" },
   { id: "MEM-004", name: "최수진", email: "choi@greenbuild.com", company: "그린빌딩(주)", phone: "010-4567-8901", date: "2026-03-16", status: "rejected" },
-  { id: "MEM-005", name: "정태양", email: "jung@technopark.kr", company: "테크노파크", phone: "010-5678-9012", date: "2026-03-15", status: "pending" },
+  { id: "MEM-005", name: "정태양", email: "jung@technopark.kr", company: "테크노파크", phone: "010-5678-9012", date: "2026-03-15", status: "신청" },
 ];
 
 const mockCompanyReqs = [
-  { id: "COM-001", companyName: "스마트그린(주)", bizNumber: "234-56-78901", ceoName: "홍길동", address: "서울 강남구 테헤란로 123", date: "2026-03-19", status: "pending" },
-  { id: "COM-002", companyName: "에코파워솔루션", bizNumber: "345-67-89012", ceoName: "김민수", address: "경기 성남시 판교로 456", date: "2026-03-18", status: "pending" },
-  { id: "COM-003", companyName: "그린에너지코퍼레이션", bizNumber: "456-78-90123", ceoName: "이지은", address: "부산 해운대구 센텀로 789", date: "2026-03-17", status: "approved" },
+  { id: "COM-001", companyName: "스마트그린(주)", bizNumber: "234-56-78901", ceoName: "홍길동", address: "서울 강남구 테헤란로 123", date: "2026-03-19", status: "신청" },
+  { id: "COM-002", companyName: "에코파워솔루션", bizNumber: "345-67-89012", ceoName: "김민수", address: "경기 성남시 판교로 456", date: "2026-03-18", status: "신청" },
+  { id: "COM-003", companyName: "그린에너지코퍼레이션", bizNumber: "456-78-90123", ceoName: "이지은", address: "부산 해운대구 센텀로 789", date: "2026-03-17", status: "완료" },
   { id: "COM-004", companyName: "자연과기술(주)", bizNumber: "567-89-01234", ceoName: "박서준", address: "인천 연수구 송도대로 321", date: "2026-03-15", status: "rejected" },
 ];
 
@@ -81,9 +81,9 @@ export function AdminPage() {
 
 
   // 승인 대기 멤버 목록
-  const PendingMembers = async () => {
+  const 신청Members = async () => {
     try {
-      const response = await axios.get("/api/admin/member/pending");
+      const response = await axios.get("/api/admin/member/신청");
       setMembers(response.data);
     }
     catch (e) { console.log(e); }
@@ -93,14 +93,14 @@ export function AdminPage() {
   const handleMembers = async (mid: number, action: "approve" | "reject") => {
     try {
       const response = await axios.patch(`/api/admin/member/${mid}/${action}`);
-      PendingMembers();
+      신청Members();
     } catch (e) { console.log(e); }
   };
 
   // 승인 대기 기업 목록 
-  const PendingCompanies = async () => {
+  const 신청Companies = async () => {
     try {
-      const response = await axios.get("/api/admin/company/pending");
+      const response = await axios.get("/api/admin/company/신청");
       setCompanyReqs(response.data);
     } catch (e) { console.log(e); }
   };
@@ -109,14 +109,14 @@ export function AdminPage() {
   const handleCompanies = async (cid: number, action: "approve" | "reject") => {
     try {
       const response = await axios.patch(`/api/admin/company/${cid}/${action}`);
-      PendingCompanies();
+      신청Companies();
     } catch (e) { console.log(e) }
   };
 
   // 최초 실행 
   useEffect(() => {
-    PendingMembers();
-    PendingCompanies();
+    신청Members();
+    신청Companies();
   }, []);
 
   const filtered = filter === "all" ? apps : apps.filter((a) => a.status === filter);
@@ -125,6 +125,29 @@ export function AdminPage() {
     setApps((prev) => prev.map((a) => (a.id === id ? { ...a, status: action } : a)));
     setSelected(null);
   };
+
+  // 답사 관리 
+  //   const [apps, setApps] = useState(mockApps);
+  //   const [selected, setSelected] = useState<Application | null>(null);
+  const getAppList = async () => {
+    try{
+      const response = await axios.get("http://localhost:8080/api/admin/visit");
+      setApps( response.data );
+    }catch(error){
+      console.error("답사 신청 목록 조회 실패", error);
+    }
+  } 
+  const getSelected = (status: String) =>{
+    switch (status) {
+      case "신청": return 0;
+      case "진행중": return 1;
+      case "완료": return 2;
+      default: return 0;
+    }
+  };
+    useEffect(() => {
+      getAppList();
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -139,7 +162,7 @@ export function AdminPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "등록 기업", value: "248", icon: Building2, change: "+12", bg: "bg-blue-50", iconColor: "text-blue-600" },
-          { label: "미처리 신청", value: String(apps.filter((a) => a.status === "pending").length), icon: Clock, change: "처리 필요", bg: "bg-amber-50", iconColor: "text-amber-600" },
+          { label: "미처리 신청", value: String(apps.filter((a) => a.status === "신청").length), icon: Clock, change: "처리 필요", bg: "bg-amber-50", iconColor: "text-amber-600" },
           { label: "총 수목", value: "34,520", icon: TreePine, change: "+1,240", bg: "bg-emerald-50", iconColor: "text-emerald-600" },
           { label: "탄소흡수량", value: "182.4t", icon: TrendingUp, change: "+8.2%", bg: "bg-purple-50", iconColor: "text-purple-600" },
         ].map((s) => (
@@ -201,11 +224,11 @@ export function AdminPage() {
                     <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{m.company_number}</td>
                     <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{m.createDate.replace("T", " / ")}</td>
                     <td className="px-5 py-3.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] ${m.isApproved === 0 ? "text-amber-700 bg-amber-50" : m.isApproved === 1 ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`} style={{ fontWeight: 600 }}>
-                        {m.isApproved === 0 ? "대기" : m.isApproved === 1 ? "승인" : "거절"}                      </span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] ${m.is완료 === 0 ? "text-amber-700 bg-amber-50" : m.is완료 === 1 ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`} style={{ fontWeight: 600 }}>
+                        {m.is완료 === 0 ? "대기" : m.is완료 === 1 ? "승인" : "거절"}                      </span>
                     </td>
                     <td className="px-5 py-3.5">
-                      {m.isApproved === 0 && (
+                      {m.is완료 === 0 && (
                         <div className="flex gap-1.5">
                           <button onClick={() => { handleMembers(m.mid, "approve") }} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[0.75rem] hover:bg-emerald-100 transition-colors" style={{ fontWeight: 600 }}>승인</button>
                           <button onClick={() => { handleMembers(m.mid, "reject") }} className="px-2.5 py-1 bg-red-50 text-red-700 rounded-lg text-[0.75rem] hover:bg-red-100 transition-colors" style={{ fontWeight: 600 }}>거절</button>
@@ -245,12 +268,12 @@ export function AdminPage() {
                     <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{c.address}</td>
                     <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{c.createDate.replace("T"," / ")}</td>
                     <td className="px-5 py-3.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] ${c.isApproved === 0 ? "text-amber-700 bg-amber-50" : c.isApproved === 1 ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`} style={{ fontWeight: 600 }}>
-                        {c.isApproved === 0 ? "대기" : c.isApproved === 1 ? "승인" : "거절"} 
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] ${c.is완료 === 0 ? "text-amber-700 bg-amber-50" : c.is완료 === 1 ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`} style={{ fontWeight: 600 }}>
+                        {c.is완료 === 0 ? "대기" : c.is완료 === 1 ? "승인" : "거절"} 
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
-                      {c.isApproved === 0 && (
+                      {c.is완료 === 0 && (
                         <div className="flex gap-1.5">
                           <button onClick={() => {handleCompanies(c.companyId,"approve")}} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[0.75rem] hover:bg-emerald-100 transition-colors" style={{ fontWeight: 600 }}>승인</button>
                           <button onClick={() => {handleCompanies(c.companyId,"reject")}} className="px-2.5 py-1 bg-red-50 text-red-700 rounded-lg text-[0.75rem] hover:bg-red-100 transition-colors" style={{ fontWeight: 600 }}>거절</button>
@@ -272,9 +295,9 @@ export function AdminPage() {
             {(
               [
                 { key: "all", label: "전체" },
-                { key: "pending", label: "답사예정" },
-                { key: "reviewing", label: "답사중" },
-                { key: "approved", label: "답사완료" }
+                { key: "신청", label: "답사예정" },
+                { key: "진행중", label: "답사중" },
+                { key: "완료", label: "답사완료" }
               ] as const
             ).map((f) => (
               <button
@@ -296,7 +319,7 @@ export function AdminPage() {
             ))}
           </div>
 
-          {/* Application List */}
+          {/* 답사관리 */}
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -331,10 +354,10 @@ export function AdminPage() {
                           </span>
                         </td>
                         <td className="px-5 py-3.5">
-                          {(app.status === "pending" || app.status === "reviewing") && (
+                          {(app.status === "신청" || app.status === "진행중") && (
                             <div className="flex gap-1.5">
                               <button
-                                onClick={() => handleAction(app.id, "approved")}
+                                onClick={() => handleAction(app.id, "완료")}
                                 className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[0.75rem] hover:bg-emerald-100 transition-colors"
                                 style={{ fontWeight: 600 }}
                               >
