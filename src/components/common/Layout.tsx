@@ -13,7 +13,8 @@ import {
   X,
   ShieldCheck,
   ClipboardCheck,
-  UserCircle, 
+  UserCircle,
+  Calendar,
 } from "lucide-react";
 import { GrootLogo } from "@/components/common/GrootLogo";
 
@@ -26,11 +27,13 @@ function getNavItems(isAdmin: boolean) {
     { to: "/carbon", label: "탄소 현황", icon: BarChart3 },
     { to: "/certification", label: "인증마크", icon: Award },
     { to: "/esg-report", label: "ESG 보고서", icon: FileText },
-    { to: "/expert-report", label: "전문가 보고서", icon: ClipboardCheck },
     ...(isAdmin ? [
+      { to: "/expert-report", label: "전문가 보고서", icon: ClipboardCheck },
       { to: "/admin", label: "관리자", icon: ShieldCheck },
-    ] : []),
-    { to: "/mypage", label: "마이페이지", icon: UserCircle },
+      { to: "/admin/schedules", label: "전문가 일정 관리", icon: Calendar },
+    ] : [
+      { to: "/mypage", label: "마이페이지", icon: UserCircle },
+    ]),
   ];
 }
 

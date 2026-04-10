@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import { Layout } from "@/components/common";
 import { Landing } from "@/pages/landing";
-import { SignUp, Login } from "@/pages/auth";
+import { SignUp, Login, SelectRegister, CompanyRegister } from "@/pages/auth";
 import { Dashboard } from "@/pages/dashboard";
 import { TreeRecommendation, TreeList } from "@/pages/tree";
 import { ApplicationStatus, ApplicationForm } from "@/pages/application";
@@ -12,8 +12,6 @@ import { AdminPage, ExpertSchedule } from "@/pages/admin";
 import { LogoShowcase } from "@/pages/brand";
 import { NotFound } from "@/components/common";
 import { MyPage } from "@/pages/mypage";
-import { CompanyRegister } from "@/pages/auth";
-import { SelectRegister } from "@/pages/auth";
 
 export const router = createBrowserRouter([
   {
@@ -36,6 +34,7 @@ export const router = createBrowserRouter([
       { path: "admin", Component: AdminPage },
       { path: "admin/schedules", Component: ExpertSchedule },
       { path: "brand", Component: LogoShowcase },
+      //{ path: "api/applications", Component: Application },
       { path: "*", Component: NotFound },
       { path: "company-register", Component: CompanyRegister },
       { path: "select-register", Component: SelectRegister },
