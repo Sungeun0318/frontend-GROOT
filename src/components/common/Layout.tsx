@@ -20,7 +20,7 @@ import { GrootLogo } from "@/components/common/GrootLogo";
 
 function getNavItems(isAdmin: boolean) {
   return [
-    { to: "/dashboard", label: "대시보드", icon: LayoutDashboard },
+    ...(isAdmin ? [] : [{ to: "/dashboard", label: "대시보드", icon: LayoutDashboard }]),
     { to: "/recommend", label: "수목 추천", icon: TreePine },
     { to: "/applications", label: "답사 신청 현황", icon: ClipboardList },
     { to: "/trees", label: "나무 목록", icon: Trees },
