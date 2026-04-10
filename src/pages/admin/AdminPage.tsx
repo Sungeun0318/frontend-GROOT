@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   CheckCircle2,
   Clock,
@@ -75,8 +76,48 @@ export function AdminPage() {
   const [filter, setFilter] = useState<AppStatus | "all">("all");
   const [tab, setTab] = useState<"applications" | "companies" | "members" | "companyRequests">("applications");
   const [selected, setSelected] = useState<Application | null>(null);
-  const [members, setMembers] = useState(mockMembers);
-  const [companyReqs, setCompanyReqs] = useState(mockCompanyReqs);
+  const [members, setMembers] = useState<any[]>([]);
+  const [companyReqs, setCompanyReqs] = useState<any[]>([]);
+
+
+  // 승인 대기 멤버 목록
+  const PendingMembers = async () => {
+    try {
+      const response = await axios.get("/api/admin/member/pending");
+      setMembers(response.data);
+    }
+    catch (e) { console.log(e); }
+  };
+
+  // 멤버 승인 핸들러 
+  const handleMembers = async (mid: number, action: "approve" | "reject") => {
+    try {
+      const response = await axios.patch(`/api/admin/member/${mid}/${action}`);
+      PendingMembers();
+    } catch (e) { console.log(e); }
+  };
+
+  // 승인 대기 기업 목록 
+  const PendingCompanies = async () => {
+    try {
+      const response = await axios.get("/api/admin/company/pending");
+      setCompanyReqs(response.data);
+    } catch (e) { console.log(e); }
+  };
+
+  // 기업 승인 핸들러 
+  const handleCompanies = async (cid: number, action: "approve" | "reject") => {
+    try {
+      const response = await axios.patch(`/api/admin/company/${cid}/${action}`);
+      PendingCompanies();
+    } catch (e) { console.log(e) }
+  };
+
+  // 최초 실행 
+  useEffect(() => {
+    PendingMembers();
+    PendingCompanies();
+  }, []);
 
   const filtered = filter === "all" ? apps : apps.filter((a) => a.status === filter);
 
@@ -126,9 +167,8 @@ export function AdminPage() {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`px-5 py-2 rounded-lg text-[0.9rem] transition-all ${
-              tab === t.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-5 py-2 rounded-lg text-[0.9rem] transition-all ${tab === t.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              }`}
             style={{ fontWeight: 600 }}
           >
             {t.label}
@@ -154,22 +194,21 @@ export function AdminPage() {
               </thead>
               <tbody>
                 {members.map((m) => (
-                  <tr key={m.id} className="border-t border-gray-50 hover:bg-gray-50/50">
-                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-900" style={{ fontWeight: 600 }}>{m.name}</td>
+                  <tr key={m.mid} className="border-t border-gray-50 hover:bg-gray-50/50">
+                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-900" style={{ fontWeight: 600 }}>{m.party_name}</td>
                     <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{m.email}</td>
-                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-700">{m.company}</td>
-                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{m.phone}</td>
-                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{m.date}</td>
+                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-700">{m.companyName}</td>
+                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{m.company_number}</td>
+                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{m.createDate.replace("T", " / ")}</td>
                     <td className="px-5 py-3.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] ${m.status === "pending" ? "text-amber-700 bg-amber-50" : m.status === "approved" ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`} style={{ fontWeight: 600 }}>
-                        {m.status === "pending" ? "대기" : m.status === "approved" ? "승인" : "거절"}
-                      </span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] ${m.isApproved === 0 ? "text-amber-700 bg-amber-50" : m.isApproved === 1 ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`} style={{ fontWeight: 600 }}>
+                        {m.isApproved === 0 ? "대기" : m.isApproved === 1 ? "승인" : "거절"}                      </span>
                     </td>
                     <td className="px-5 py-3.5">
-                      {m.status === "pending" && (
+                      {m.isApproved === 0 && (
                         <div className="flex gap-1.5">
-                          <button onClick={() => setMembers(prev => prev.map(x => x.id === m.id ? { ...x, status: "approved" } : x))} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[0.75rem] hover:bg-emerald-100 transition-colors" style={{ fontWeight: 600 }}>승인</button>
-                          <button onClick={() => setMembers(prev => prev.map(x => x.id === m.id ? { ...x, status: "rejected" } : x))} className="px-2.5 py-1 bg-red-50 text-red-700 rounded-lg text-[0.75rem] hover:bg-red-100 transition-colors" style={{ fontWeight: 600 }}>거절</button>
+                          <button onClick={() => { handleMembers(m.mid, "approve") }} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[0.75rem] hover:bg-emerald-100 transition-colors" style={{ fontWeight: 600 }}>승인</button>
+                          <button onClick={() => { handleMembers(m.mid, "reject") }} className="px-2.5 py-1 bg-red-50 text-red-700 rounded-lg text-[0.75rem] hover:bg-red-100 transition-colors" style={{ fontWeight: 600 }}>거절</button>
                         </div>
                       )}
                     </td>
@@ -199,22 +238,22 @@ export function AdminPage() {
               </thead>
               <tbody>
                 {companyReqs.map((c) => (
-                  <tr key={c.id} className="border-t border-gray-50 hover:bg-gray-50/50">
+                  <tr key={c.companyId} className="border-t border-gray-50 hover:bg-gray-50/50">
                     <td className="px-5 py-3.5 text-[0.85rem] text-gray-900" style={{ fontWeight: 600 }}>{c.companyName}</td>
-                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{c.bizNumber}</td>
+                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{c.business_number}</td>
                     <td className="px-5 py-3.5 text-[0.85rem] text-gray-700">{c.ceoName}</td>
                     <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{c.address}</td>
-                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{c.date}</td>
+                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{c.createDate.replace("T"," / ")}</td>
                     <td className="px-5 py-3.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] ${c.status === "pending" ? "text-amber-700 bg-amber-50" : c.status === "approved" ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`} style={{ fontWeight: 600 }}>
-                        {c.status === "pending" ? "대기" : c.status === "approved" ? "승인" : "거절"}
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] ${c.isApproved === 0 ? "text-amber-700 bg-amber-50" : c.isApproved === 1 ? "text-emerald-700 bg-emerald-50" : "text-red-700 bg-red-50"}`} style={{ fontWeight: 600 }}>
+                        {c.isApproved === 0 ? "대기" : c.isApproved === 1 ? "승인" : "거절"} 
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
-                      {c.status === "pending" && (
+                      {c.isApproved === 0 && (
                         <div className="flex gap-1.5">
-                          <button onClick={() => setCompanyReqs(prev => prev.map(x => x.id === c.id ? { ...x, status: "approved" } : x))} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[0.75rem] hover:bg-emerald-100 transition-colors" style={{ fontWeight: 600 }}>승인</button>
-                          <button onClick={() => setCompanyReqs(prev => prev.map(x => x.id === c.id ? { ...x, status: "rejected" } : x))} className="px-2.5 py-1 bg-red-50 text-red-700 rounded-lg text-[0.75rem] hover:bg-red-100 transition-colors" style={{ fontWeight: 600 }}>거절</button>
+                          <button onClick={() => {handleCompanies(c.companyId,"approve")}} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[0.75rem] hover:bg-emerald-100 transition-colors" style={{ fontWeight: 600 }}>승인</button>
+                          <button onClick={() => {handleCompanies(c.companyId,"reject")}} className="px-2.5 py-1 bg-red-50 text-red-700 rounded-lg text-[0.75rem] hover:bg-red-100 transition-colors" style={{ fontWeight: 600 }}>거절</button>
                         </div>
                       )}
                     </td>
@@ -242,11 +281,10 @@ export function AdminPage() {
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`px-3.5 py-1.5 rounded-lg text-[0.8rem] transition-all ${
-                  filter === f.key
-                    ? "bg-[#2D6A4F] text-white"
-                    : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
-                }`}
+                className={`px-3.5 py-1.5 rounded-lg text-[0.8rem] transition-all ${filter === f.key
+                  ? "bg-[#2D6A4F] text-white"
+                  : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
+                  }`}
                 style={{ fontWeight: 600 }}
               >
                 {f.label}
