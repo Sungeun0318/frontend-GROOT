@@ -68,7 +68,7 @@ export function TreeRecommendation() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-[1.5rem] text-[#2D2D2D]" style={{ fontWeight: 700 }}>수목 추천 · 식재 신청</h1>
+        <h1 className="text-[1.5rem] text-[#2D2D2D]" style={{ fontWeight: 700 }}>수목 추천</h1>
         <p className="text-muted-foreground mt-1">지역 기후 기반으로 최적 수종을 추천받고 바로 신청하세요.</p>
       </div>
 
@@ -98,7 +98,7 @@ export function TreeRecommendation() {
           <h2 className="text-[1.125rem]" style={{ fontWeight: 600 }}>STEP 1 — 기본 정보 입력</h2>
 
           <div>
-            <label className="block text-[0.875rem] text-[#2D2D2D] mb-1.5">식재 위치</label>
+            <label className="block text-[0.875rem] text-[#2D2D2D] mb-1.5">기업 위치</label>
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <input
@@ -109,12 +109,7 @@ export function TreeRecommendation() {
                 placeholder="주소를 검색하세요"
               />
             </div>
-            <div className="mt-3 h-48 bg-[#E8F5E9] rounded-xl flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="w-8 h-8 text-[#2D6A4F] mx-auto mb-2" />
-                <p className="text-[0.875rem] text-muted-foreground">카카오맵 주소 검색 연동 영역</p>
-              </div>
-            </div>
+            
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -129,13 +124,13 @@ export function TreeRecommendation() {
               />
             </div>
             <div>
-              <label className="block text-[0.875rem] text-[#2D2D2D] mb-1.5">예산 범위 (선택)</label>
+              <label className="block text-[0.875rem] text-[#2D2D2D] mb-1.5">면적</label>
               <input
                 type="text"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] border border-border focus:ring-2 focus:ring-[#52B788] focus:border-transparent outline-none"
-                placeholder="예: 100만원 이내"
+                placeholder="예: M² 또는 평"
               />
             </div>
           </div>
