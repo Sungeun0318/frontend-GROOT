@@ -30,7 +30,7 @@ export const router = createBrowserRouter([
       { path: "carbon", Component: CarbonVisualization },
       { path: "certification", Component: Certification },
       { path: "esg-report", Component: ESGReport },
-      { path: "expert-report", Component: ExpertReport },
+      { path: "expert-report/:detailId", Component: ExpertReport },
       { path: "admin", Component: AdminPage },
       { path: "admin/schedules", Component: ExpertSchedule },
       { path: "brand", Component: LogoShowcase },

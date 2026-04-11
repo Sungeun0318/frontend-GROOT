@@ -1,40 +1,110 @@
-import { useState } from "react";
-import { Search, Filter, X, MapPin, Calendar, Activity, TreePine } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import { Search, Filter, X, MapPin, Calendar, TreePine } from "lucide-react";
 
-const trees = [
-  { id: 1, species: "느티나무", dbh: 15.2, location: "서울 강남구 삼성동", carbon: 38.2, regDate: "2024.06.15", health: "양호", cert: "인증완료", gps: "37.5080° N, 127.0628° E" },
-  { id: 2, species: "소나무", dbh: 22.8, location: "경기 수원시 팔달구", carbon: 52.1, regDate: "2024.03.20", health: "양호", cert: "인증완료", gps: "37.2636° N, 127.0286° E" },
-  { id: 3, species: "은행나무", dbh: 12.5, location: "인천 연수구 송도동", carbon: 29.5, regDate: "2024.09.10", health: "보통", cert: "점검중", gps: "37.3818° N, 126.6569° E" },
-  { id: 4, species: "단풍나무", dbh: 18.3, location: "서울 서초구 반포동", carbon: 41.8, regDate: "2024.11.05", health: "양호", cert: "인증완료", gps: "37.5074° N, 127.0113° E" },
-  { id: 5, species: "벚나무", dbh: 10.7, location: "경기 성남시 분당구", carbon: 25.3, regDate: "2024.08.22", health: "불량", cert: "점검필요", gps: "37.3595° N, 127.1086° E" },
-  { id: 6, species: "느티나무", dbh: 20.1, location: "서울 마포구 상암동", carbon: 45.6, regDate: "2024.04.18", health: "양호", cert: "인증완료", gps: "37.5775° N, 126.8919° E" },
-  { id: 7, species: "소나무", dbh: 25.4, location: "경기 용인시 수지구", carbon: 58.2, regDate: "2024.02.10", health: "양호", cert: "인증완료", gps: "37.3219° N, 127.0987° E" },
-  { id: 8, species: "참나무", dbh: 19.6, location: "서울 송파구 잠실동", carbon: 44.1, regDate: "2024.07.30", health: "보통", cert: "점검중", gps: "37.5133° N, 127.1001° E" },
-];
+interface TreeItem {
+  treeId: number;
+  treeType: string;
+  treeStatus: string;
+  kind: string;
+  createDate: string;
+  address: string;
+  carbonAbsorption: number;
+}
 
-const healthColors: Record<string, string> = { "양호": "#22C55E", "보통": "#EAB308", "불량": "#EF4444" };
-const certColors: Record<string, string> = { "인증완료": "#22C55E", "점검중": "#3B82F6", "점검필요": "#EF4444" };
+const healthColors: Record<string, string> = {
+  양호: "#22C55E",
+  보통: "#EAB308",
+  불량: "#EF4444",
+};
+
+function formatCarbon(value: number) {
+  if (!Number.isFinite(value)) return "-";
+  return `${value.toLocaleString("ko-KR", {
+    maximumFractionDigits: 2,
+  })}`;
+}
 
 export function TreeList() {
+  const [trees, setTrees] = useState<TreeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [speciesFilter, setSpeciesFilter] = useState("all");
   const [selectedTree, setSelectedTree] = useState<number | null>(null);
 
-  const species = [...new Set(trees.map((t) => t.species))];
+  useEffect(() => {
+    const fetchTrees = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-  const filtered = trees.filter((t) => {
-    if (speciesFilter !== "all" && t.species !== speciesFilter) return false;
-    if (search && !t.species.includes(search) && !t.location.includes(search)) return false;
-    return true;
-  });
+        const token = localStorage.getItem("token");
 
-  const tree = trees.find((t) => t.id === selectedTree);
+        const response = await axios.get(
+          "http://localhost:8080/api/expert-reports/company/trees",
+          {
+            headers: {
+              Authorization: `${token}`,
+            },
+          }
+        );
+
+        const mappedData: TreeItem[] = response.data.map((item: any) => ({
+          treeId: item.treeId,
+          treeType: item.treeType,
+          treeStatus: item.treeStatus,
+          kind: item.kind,
+          createDate: item.createDate,
+          address: item.address,
+          carbonAbsorption: Number(item.carbonAbsorption ?? 0),
+        }));
+
+        setTrees(mappedData);
+      } catch (err) {
+        console.error(err);
+        setError("나무 목록을 불러오지 못했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTrees();
+  }, []);
+
+  const species = useMemo(
+    () => [...new Set(trees.map((t) => t.treeType))],
+    [trees]
+  );
+
+  const filtered = useMemo(() => {
+    return trees.filter((t) => {
+      if (speciesFilter !== "all" && t.treeType !== speciesFilter) return false;
+
+      if (
+        search &&
+        !t.treeType.includes(search) &&
+        !t.address.includes(search) &&
+        !t.kind.includes(search)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [trees, speciesFilter, search]);
+
+  const tree = trees.find((t) => t.treeId === selectedTree);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-[1.5rem] text-[#2D2D2D]" style={{ fontWeight: 700 }}>나무 목록</h1>
-        <p className="text-muted-foreground mt-1">등록된 나무 전체를 조회하고 상세 정보를 확인하세요.</p>
+        <h1 className="text-[1.5rem] text-[#2D2D2D]" style={{ fontWeight: 700 }}>
+          나무 목록
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          기업의 최신 차수 기준 나무 정보를 조회합니다.
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -44,10 +114,11 @@ export function TreeList() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="수종 또는 위치 검색"
+            placeholder="수종, 수종 구분, 위치 검색"
             className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-border focus:ring-2 focus:ring-[#52B788] focus:border-transparent outline-none text-[0.875rem]"
           />
         </div>
+
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-muted-foreground" />
           <select
@@ -57,7 +128,9 @@ export function TreeList() {
           >
             <option value="all">전체 수종</option>
             {species.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
         </div>
@@ -68,96 +141,186 @@ export function TreeList() {
           <table className="w-full">
             <thead>
               <tr className="bg-[#F8F9FA] border-b border-border">
-                {["수종", "DBH(cm)", "위치", "탄소흡수량", "등록일", "건강상태", "인증상태"].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-[0.75rem] text-muted-foreground whitespace-nowrap" style={{ fontWeight: 600 }}>{h}</th>
+                {["나무 번호", "수종", "탄소흡수량", "수종 구분", "건강상태", "위치", "등록날짜"].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left text-[0.75rem] text-muted-foreground whitespace-nowrap"
+                    style={{ fontWeight: 600 }}
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((t) => (
-                <tr key={t.id} className="border-b border-border hover:bg-[#F8F9FA] transition-colors cursor-pointer" onClick={() => setSelectedTree(t.id)}>
-                  <td className="px-4 py-3.5 text-[0.875rem]" style={{ fontWeight: 500 }}>
-                    <div className="flex items-center gap-2">
-                      <TreePine className="w-4 h-4 text-[#2D6A4F]" />
-                      {t.species}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 text-[0.875rem]">{t.dbh}</td>
-                  <td className="px-4 py-3.5 text-[0.875rem] text-muted-foreground">{t.location}</td>
-                  <td className="px-4 py-3.5 text-[0.875rem] text-[#2D6A4F]" style={{ fontWeight: 600 }}>{t.carbon} kg</td>
-                  <td className="px-4 py-3.5 text-[0.875rem] text-muted-foreground">{t.regDate}</td>
-                  <td className="px-4 py-3.5">
-                    <span className="px-2.5 py-1 rounded-full text-[0.75rem]" style={{ fontWeight: 500, backgroundColor: healthColors[t.health] + "15", color: healthColors[t.health] }}>
-                      {t.health}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <span className="px-2.5 py-1 rounded-full text-[0.75rem]" style={{ fontWeight: 500, backgroundColor: certColors[t.cert] + "15", color: certColors[t.cert] }}>
-                      {t.cert}
-                    </span>
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                    데이터를 불러오는 중입니다.
                   </td>
                 </tr>
-              ))}
+              ) : error ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-red-500">
+                    {error}
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                    조회된 나무가 없습니다.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((t) => (
+                  <tr
+                    key={t.treeId}
+                    className="border-b border-border hover:bg-[#F8F9FA] transition-colors cursor-pointer"
+                    onClick={() => setSelectedTree(t.treeId)}
+                  >
+                    <td className="px-4 py-3.5 text-[0.875rem]" style={{ fontWeight: 600 }}>
+                      {t.treeId}
+                    </td>
+
+                    <td className="px-4 py-3.5 text-[0.875rem]" style={{ fontWeight: 500 }}>
+                      <div className="flex items-center gap-2">
+                        <TreePine className="w-4 h-4 text-[#2D6A4F]" />
+                        {t.treeType}
+                      </div>
+                    </td>
+
+                    <td
+                      className="px-4 py-3.5 text-[0.875rem] text-[#2D6A4F]"
+                      style={{ fontWeight: 600 }}
+                    >
+                      {formatCarbon(t.carbonAbsorption)}
+                    </td>
+
+                    <td className="px-4 py-3.5 text-[0.875rem] text-muted-foreground">
+                      {t.kind}
+                    </td>
+
+                    <td className="px-4 py-3.5">
+                      <span
+                        className="px-2.5 py-1 rounded-full text-[0.75rem]"
+                        style={{
+                          fontWeight: 500,
+                          backgroundColor: (healthColors[t.treeStatus] || "#9CA3AF") + "15",
+                          color: healthColors[t.treeStatus] || "#6B7280",
+                        }}
+                      >
+                        {t.treeStatus}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-3.5 text-[0.875rem] text-muted-foreground">
+                      {t.address}
+                    </td>
+
+                    <td className="px-4 py-3.5 text-[0.875rem] text-muted-foreground">
+                      {t.createDate}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
       {selectedTree && tree && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedTree(null)}>
-          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedTree(null)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6 border-b border-border flex items-center justify-between">
-              <h3 className="text-[1.125rem]" style={{ fontWeight: 600 }}>{tree.species} 상세 정보</h3>
-              <button onClick={() => setSelectedTree(null)} className="p-1 hover:bg-muted rounded-lg"><X className="w-5 h-5" /></button>
+              <h3 className="text-[1.125rem]" style={{ fontWeight: 600 }}>
+                {tree.treeType} 상세 정보
+              </h3>
+              <button
+                onClick={() => setSelectedTree(null)}
+                className="p-1 hover:bg-muted rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
+
             <div className="p-6 space-y-5">
               <div className="h-48 bg-[#E8F5E9] rounded-xl flex items-center justify-center">
                 <div className="text-center">
                   <TreePine className="w-10 h-10 text-[#2D6A4F] mx-auto mb-2" />
-                  <p className="text-[0.875rem] text-muted-foreground">현장 사진</p>
+                  <p className="text-[0.875rem] text-muted-foreground">나무 정보</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-[0.875rem]">
-                <div><span className="text-muted-foreground block">수종</span><p style={{ fontWeight: 500 }}>{tree.species}</p></div>
-                <div><span className="text-muted-foreground block">DBH</span><p style={{ fontWeight: 500 }}>{tree.dbh} cm</p></div>
-                <div><span className="text-muted-foreground block">탄소흡수량</span><p className="text-[#2D6A4F]" style={{ fontWeight: 600 }}>{tree.carbon} kg CO₂</p></div>
-                <div><span className="text-muted-foreground block">건강상태</span>
-                  <span className="px-2 py-0.5 rounded-full text-[0.75rem]" style={{ fontWeight: 500, backgroundColor: healthColors[tree.health] + "15", color: healthColors[tree.health] }}>{tree.health}</span>
+                <div>
+                  <span className="text-muted-foreground block">나무 번호</span>
+                  <p style={{ fontWeight: 500 }}>{tree.treeId}</p>
+                </div>
+
+                <div>
+                  <span className="text-muted-foreground block">수종</span>
+                  <p style={{ fontWeight: 500 }}>{tree.treeType}</p>
+                </div>
+
+                <div>
+                  <span className="text-muted-foreground block">수종 구분</span>
+                  <p style={{ fontWeight: 500 }}>{tree.kind}</p>
+                </div>
+
+                <div>
+                  <span className="text-muted-foreground block">건강상태</span>
+                  <span
+                    className="px-2 py-0.5 rounded-full text-[0.75rem]"
+                    style={{
+                      fontWeight: 500,
+                      backgroundColor: (healthColors[tree.treeStatus] || "#9CA3AF") + "15",
+                      color: healthColors[tree.treeStatus] || "#6B7280",
+                    }}
+                  >
+                    {tree.treeStatus}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-muted-foreground block">탄소흡수량</span>
+                  <p className="text-[#2D6A4F]" style={{ fontWeight: 600 }}>
+                    {formatCarbon(tree.carbonAbsorption)}
+                  </p>
+                </div>
+
+                <div>
+                  <span className="text-muted-foreground block">등록날짜</span>
+                  <p style={{ fontWeight: 500 }}>{tree.createDate}</p>
                 </div>
               </div>
 
               <div className="bg-[#F8F9FA] rounded-xl p-4 space-y-2 text-[0.875rem]">
-                <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-muted-foreground" /><span>{tree.gps}</span></div>
-                <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-muted-foreground" /><span>등록일: {tree.regDate}</span></div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <span>{tree.address}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <span>등록일: {tree.createDate}</span>
+                </div>
               </div>
 
               <div className="border border-border rounded-xl p-4">
-                <h4 className="text-[0.875rem] mb-2" style={{ fontWeight: 600 }}>탄소흡수량 계산 근거</h4>
-                <p className="text-[0.75rem] text-muted-foreground">W = a × DBH^b (바이오매스 상대생장식)</p>
-                <p className="text-[0.75rem] text-muted-foreground mt-1">a = 0.0509, b = 2.5843 (국립산림과학원)</p>
-                <p className="text-[0.75rem] text-muted-foreground mt-1">탄소전환계수: 0.4737</p>
-              </div>
-
-              <div>
-                <h4 className="text-[0.875rem] mb-3" style={{ fontWeight: 600 }}>점검 이력</h4>
-                <div className="space-y-3">
-                  {[
-                    { date: "2025.03.01", result: "정기점검 - 양호", icon: Activity },
-                    { date: "2024.09.15", result: "정기점검 - 양호", icon: Activity },
-                    { date: tree.regDate, result: "최초 등록 및 답사", icon: Calendar },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#D8F3DC] flex items-center justify-center shrink-0 mt-0.5">
-                        <item.icon className="w-3 h-3 text-[#2D6A4F]" />
-                      </div>
-                      <div>
-                        <p className="text-[0.875rem]" style={{ fontWeight: 500 }}>{item.result}</p>
-                        <p className="text-[0.75rem] text-muted-foreground">{item.date}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <h4 className="text-[0.875rem] mb-2" style={{ fontWeight: 600 }}>
+                  탄소흡수량
+                </h4>
+                <p className="text-[0.875rem] text-[#2D6A4F]" style={{ fontWeight: 600 }}>
+                  {formatCarbon(tree.carbonAbsorption)}
+                </p>
+                <p className="text-[0.75rem] text-muted-foreground mt-2">
+                  해당 나무의 개별 탄소흡수량 계산값입니다.
+                </p>
               </div>
             </div>
           </div>
