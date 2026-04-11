@@ -145,7 +145,15 @@ export function SignUp() {
                 onClick={() => {
                   new (window as any).daum.Postcode({
                     oncomplete: (data: any) => {
-                      handleChange("address", data.jibunAddress || data.autoJibunAddress);
+                      const jibun = data.jibunAddress || data.autoJibunAddress;
+                      const bcode = data.bcode;
+                      const isMountain = /산\s*\d/.test(jibun) ? "2" : "1";
+                      const match = jibun.match(/(\d+)(?:-(\d+))?$/);
+                      const bonbun = String(match?.[1] ?? 0).padStart(4, "0");
+                      const bubun = String(match?.[2] ?? 0).padStart(4, "0");
+                      const pnu = bcode + isMountain + bonbun + bubun;
+
+                      handleChange("address", `(${pnu})${jibun}`); // ← 이것만 바뀜
                     },
                   }).open();
                 }}
