@@ -9,7 +9,7 @@ interface TreeItem {
   kind: string;
   createDate: string;
   address: string;
-  carbon: string;
+  carbonAbsorption: number;
 }
 
 const healthColors: Record<string, string> = {
@@ -17,6 +17,13 @@ const healthColors: Record<string, string> = {
   보통: "#EAB308",
   불량: "#EF4444",
 };
+
+function formatCarbon(value: number) {
+  if (!Number.isFinite(value)) return "-";
+  return `${value.toLocaleString("ko-KR", {
+    maximumFractionDigits: 2,
+  })}`;
+}
 
 export function TreeList() {
   const [trees, setTrees] = useState<TreeItem[]>([]);
@@ -50,7 +57,7 @@ export function TreeList() {
           kind: item.kind,
           createDate: item.createDate,
           address: item.address,
-          carbon: "추후 추가 예정",
+          carbonAbsorption: Number(item.carbonAbsorption ?? 0),
         }));
 
         setTrees(mappedData);
@@ -182,8 +189,11 @@ export function TreeList() {
                       </div>
                     </td>
 
-                    <td className="px-4 py-3.5 text-[0.875rem] text-[#2D6A4F]" style={{ fontWeight: 600 }}>
-                      {t.carbon}
+                    <td
+                      className="px-4 py-3.5 text-[0.875rem] text-[#2D6A4F]"
+                      style={{ fontWeight: 600 }}
+                    >
+                      {formatCarbon(t.carbonAbsorption)}
                     </td>
 
                     <td className="px-4 py-3.5 text-[0.875rem] text-muted-foreground">
@@ -280,7 +290,7 @@ export function TreeList() {
                 <div>
                   <span className="text-muted-foreground block">탄소흡수량</span>
                   <p className="text-[#2D6A4F]" style={{ fontWeight: 600 }}>
-                    {tree.carbon}
+                    {formatCarbon(tree.carbonAbsorption)}
                   </p>
                 </div>
 
@@ -305,11 +315,11 @@ export function TreeList() {
                 <h4 className="text-[0.875rem] mb-2" style={{ fontWeight: 600 }}>
                   탄소흡수량
                 </h4>
-                <p className="text-[0.75rem] text-muted-foreground">
-                  현재는 샘플 값으로 표시 중입니다.
+                <p className="text-[0.875rem] text-[#2D6A4F]" style={{ fontWeight: 600 }}>
+                  {formatCarbon(tree.carbonAbsorption)}
                 </p>
-                <p className="text-[0.75rem] text-muted-foreground mt-1">
-                  추후 백엔드 계산값이 추가되면 해당 필드로 교체하면 됩니다.
+                <p className="text-[0.75rem] text-muted-foreground mt-2">
+                  해당 나무의 개별 탄소흡수량 계산값입니다.
                 </p>
               </div>
             </div>
