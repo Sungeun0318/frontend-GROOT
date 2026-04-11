@@ -349,7 +349,7 @@ export function TreeRecommendation() {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">총 탄소흡수량</span>
+                      <span className="text-muted-foreground">연간 총 흡수량</span>
                       <span
                         className="text-[#2D6A4F]"
                         style={{ fontWeight: 600 }}
