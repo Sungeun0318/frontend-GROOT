@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import {
   CheckCircle2, Clock, XCircle, Eye, TreePine,
@@ -43,19 +43,28 @@ interface MemberItem {
   isApproved: number;
 }
 
+interface ExpertItem {
+  expertId: number;
+  expertName: string;
+  expertNumber: string;
+  expertEmail: string;
+  expertState: string;
+  sAddress: string;
+}
+
 type AppStatus = "pending" | "reviewing" | "approved" | "rejected";
 
 interface Application {
-  id: string; company: string; species: string; qty: number; location: string; date: string; status: AppStatus; expert: string;
+  id: string; company: string; species: string; qty: number; location: string; date: string; status: AppStatus;
 }
 
 const mockApps: Application[] = [
-  { id: "APP-0318", company: "그린테크(주)", species: "소나무 외 2종", qty: 120, location: "경기 용인", date: "2026-03-18", status: "pending", expert: "김현수" },
-  { id: "APP-0317", company: "에코솔루션", species: "참나무 외 1종", qty: 80, location: "충남 천안", date: "2026-03-17", status: "reviewing", expert: "박지훈" },
-  { id: "APP-0316", company: "한국에너지공사", species: "편백나무", qty: 200, location: "전북 전주", date: "2026-03-16", status: "approved", expert: "이민호" },
-  { id: "APP-0315", company: "동아제약", species: "느티나무 외 2종", qty: 50, location: "경기 안산", date: "2026-03-15", status: "approved", expert: "정수빈" },
-  { id: "APP-0314", company: "그린빌딩(주)", species: "은행나무", qty: 30, location: "서울 강남", date: "2026-03-14", status: "rejected", expert: "최영재" },
-  { id: "APP-0312", company: "테크노파크", species: "소나무 외 1종", qty: 150, location: "대전 유성", date: "2026-03-12", status: "pending", expert: "김현수" },
+  { id: "APP-0318", company: "그린테크(주)", species: "소나무 외 2종", qty: 120, location: "경기 용인", date: "2026-03-18", status: "pending" },
+  { id: "APP-0317", company: "에코솔루션", species: "참나무 외 1종", qty: 80, location: "충남 천안", date: "2026-03-17", status: "reviewing" },
+  { id: "APP-0316", company: "한국에너지공사", species: "편백나무", qty: 200, location: "전북 전주", date: "2026-03-16", status: "approved" },
+  { id: "APP-0315", company: "동아제약", species: "느티나무 외 2종", qty: 50, location: "경기 안산", date: "2026-03-15", status: "approved" },
+  { id: "APP-0314", company: "그린빌딩(주)", species: "은행나무", qty: 30, location: "서울 강남", date: "2026-03-14", status: "rejected" },
+  { id: "APP-0312", company: "테크노파크", species: "소나무 외 1종", qty: 150, location: "대전 유성", date: "2026-03-12", status: "pending" },
 ];
 
 const statusMap: Record<AppStatus, { label: string; color: string; icon: any }> = {
@@ -68,7 +77,7 @@ const statusMap: Record<AppStatus, { label: string; color: string; icon: any }> 
 export function AdminPage() {
   const [apps, setApps] = useState(mockApps);
   const [filter, setFilter] = useState<AppStatus | "all">("all");
-  const [tab, setTab] = useState<"approval" | "applications" | "companies" | "memberList">("approval");
+  const [tab, setTab] = useState<"approval" | "applications" | "memberList" | "experts">("approval");
   const [approvalTab, setApprovalTab] = useState<"members" | "companyRequests">("companyRequests");
 
   const [members, setMembers] = useState<MemberPending[]>([]);
@@ -76,6 +85,10 @@ export function AdminPage() {
   const [companyList, setCompanyList] = useState<CompanyItem[]>([]);
   const [companyMembers, setCompanyMembers] = useState<MemberItem[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<CompanyItem | null>(null);
+  const [expertList, setExpertList] = useState<ExpertItem[]>([]);
+  const [expertModal, setExpertModal] = useState<"add" | "edit" | null>(null);
+  const [selectedExpert, setSelectedExpert] = useState<ExpertItem | null>(null);
+  const [expertForm, setExpertForm] = useState({ expertName: "", expertNumber: "", expertEmail: "", expertState: "", sAddress: "" });
 
   const token = localStorage.getItem("token");
 
@@ -96,24 +109,43 @@ export function AdminPage() {
   const fetchCompanyList = async () => {
     try {
       const res = await axios.get("/api/company/list");
-      console.log("기업목록:", res.data); // ← 추가
       setCompanyList(res.data);
     } catch (err) { console.error(err); }
   };
 
-  const shouldUpdateRef = useRef(false);
-
   const fetchCompanyMembers = async (companyId: number) => {
-    shouldUpdateRef.current = true;
-    setCompanyMembers([]);
     try {
       const res = await axios.get(`/api/member/list/${companyId}`);
-      if (shouldUpdateRef.current) {  // 뒤로가기 눌렀으면 false라서 set 안 함
-        setCompanyMembers(res.data);
+      setCompanyMembers(res.data);
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchExpertList = async () => {
+    try {
+      const res = await axios.get("/api/specialist");
+      setExpertList(res.data);
+    } catch (err) { console.error(err); }
+  };
+
+  const handleExpertSave = async () => {
+    try {
+      if (expertModal === "add") {
+        await axios.post("/api/specialist", expertForm);
+      } else if (expertModal === "edit" && selectedExpert) {
+        await axios.put(`/api/specialist/${selectedExpert.expertId}`, expertForm);
       }
-    } catch (err) {
-      console.error(err);
-    }
+      setExpertModal(null);
+      setExpertForm({ expertName: "", expertNumber: "", expertEmail: "", expertState: "", sAddress: "" });
+      fetchExpertList();
+    } catch (err) { alert("처리에 실패했습니다."); }
+  };
+
+  const handleExpertDelete = async (expertId: number) => {
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+    try {
+      await axios.delete(`/api/specialist/${expertId}`);
+      fetchExpertList();
+    } catch (err) { alert("삭제에 실패했습니다."); }
   };
 
   useEffect(() => {
@@ -123,6 +155,7 @@ export function AdminPage() {
 
   useEffect(() => {
     if (tab === "memberList") fetchCompanyList();
+    if (tab === "experts") fetchExpertList();
   }, [tab]);
 
   const handleMemberAction = async (mid: number, action: "approve" | "reject") => {
@@ -184,12 +217,14 @@ export function AdminPage() {
           { key: "approval" as const, label: "승인 관리" },
           { key: "applications" as const, label: "신청 관리" },
           { key: "memberList" as const, label: "등록 기업" },
+          { key: "experts" as const, label: "전문가 관리" },
         ].map((t) => (
           <button
             key={t.key}
             onClick={() => { setTab(t.key); setSelectedCompany(null); }}
-            className={`px-5 py-2 rounded-lg text-[0.9rem] transition-all ${tab === t.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-              }`}
+            className={`px-5 py-2 rounded-lg text-[0.9rem] transition-all ${
+              tab === t.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+            }`}
             style={{ fontWeight: 600 }}
           >
             {t.label}
@@ -208,8 +243,9 @@ export function AdminPage() {
               <button
                 key={t.key}
                 onClick={() => setApprovalTab(t.key)}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[0.875rem] transition-all ${approvalTab === t.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-                  }`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[0.875rem] transition-all ${
+                  approvalTab === t.key ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
                 style={{ fontWeight: 600 }}
               >
                 {t.label}
@@ -304,8 +340,9 @@ export function AdminPage() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[0.875rem] transition-all ${filter === f ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-                  }`}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[0.875rem] transition-all ${
+                  filter === f ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
                 style={{ fontWeight: 600 }}
               >
                 {f === "all" ? "전체" : statusMap[f].label}
@@ -327,7 +364,6 @@ export function AdminPage() {
                   <th className="text-left px-5 py-3">수량</th>
                   <th className="text-left px-5 py-3">위치</th>
                   <th className="text-left px-5 py-3">상태</th>
-                  <th className="text-left px-5 py-3">전문가</th>
                   <th className="text-left px-5 py-3">처리</th>
                 </tr>
               </thead>
@@ -364,10 +400,11 @@ export function AdminPage() {
         </div>
       )}
 
+
       {/* 등록 기업 탭 */}
       {tab === "memberList" && (
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          {selectedCompany === null ? (
+          {!selectedCompany ? (
             <>
               <div className="px-5 py-4 border-b border-gray-100 bg-gray-50">
                 <p className="text-[0.875rem] text-gray-500">기업을 클릭하면 소속 회원 목록을 볼 수 있습니다</p>
@@ -407,9 +444,10 @@ export function AdminPage() {
                         <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{c.startDate}</td>
                         <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{c.address}</td>
                         <td className="px-5 py-3.5">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] ${c.isApproved === 1 ? "text-emerald-700 bg-emerald-50" :
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] ${
+                            c.isApproved === 1 ? "text-emerald-700 bg-emerald-50" :
                             c.isApproved === 2 ? "text-red-700 bg-red-50" : "text-amber-700 bg-amber-50"
-                            }`} style={{ fontWeight: 600 }}>
+                          }`} style={{ fontWeight: 600 }}>
                             {c.isApproved === 1 ? "승인" : c.isApproved === 2 ? "거절" : "대기"}
                           </span>
                         </td>
@@ -423,11 +461,7 @@ export function AdminPage() {
             <>
               <div className="px-5 py-4 border-b border-gray-100 bg-gray-50 flex items-center gap-3">
                 <button
-                  onClick={() => {
-                    shouldUpdateRef.current = false;  // 응답 와도 무시하게
-                    setSelectedCompany(null);
-                    setCompanyMembers([]);
-                  }}
+                  onClick={() => { setSelectedCompany(null); setCompanyMembers([]); }}
                   className="flex items-center gap-1 text-[0.875rem] text-gray-500 hover:text-gray-900 transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -458,9 +492,10 @@ export function AdminPage() {
                         <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{m.email}</td>
                         <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{m.company_number}</td>
                         <td className="px-5 py-3.5">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] ${m.isApproved === 1 ? "text-emerald-700 bg-emerald-50" :
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] ${
+                            m.isApproved === 1 ? "text-emerald-700 bg-emerald-50" :
                             m.isApproved === 2 ? "text-red-700 bg-red-50" : "text-amber-700 bg-amber-50"
-                            }`} style={{ fontWeight: 600 }}>
+                          }`} style={{ fontWeight: 600 }}>
                             {m.isApproved === 1 ? "승인" : m.isApproved === 2 ? "거절" : "대기"}
                           </span>
                         </td>
@@ -471,6 +506,110 @@ export function AdminPage() {
               </div>
             </>
           )}
+        </div>
+      )}
+      {/* 전문가 관리 탭 */}
+      {tab === "experts" && (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50">
+            <p className="text-[0.875rem] text-gray-500">전문가 목록을 관리합니다</p>
+            <button
+              onClick={() => { setExpertForm({ expertName: "", expertNumber: "", expertEmail: "", expertState: "", sAddress: "" }); setExpertModal("add"); }}
+              className="px-3 py-1.5 bg-[#2D6A4F] text-white rounded-lg text-[0.8rem] hover:bg-[#235c43] transition-colors"
+              style={{ fontWeight: 600 }}
+            >+ 전문가 등록</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 text-[0.75rem] text-gray-500 uppercase tracking-wider" style={{ fontWeight: 600 }}>
+                  <th className="text-left px-5 py-3">이름</th>
+                  <th className="text-left px-5 py-3">연락처</th>
+                  <th className="text-left px-5 py-3">이메일</th>
+                  <th className="text-left px-5 py-3">상태</th>
+                  <th className="text-left px-5 py-3">주소</th>
+                  <th className="text-left px-5 py-3">관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {expertList.length === 0 && (
+                  <tr><td colSpan={6} className="px-5 py-8 text-center text-gray-400 text-[0.875rem]">등록된 전문가가 없습니다</td></tr>
+                )}
+                {expertList.map((e) => (
+                  <tr key={e.expertId} className="border-t border-gray-50 hover:bg-gray-50/50">
+                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-900" style={{ fontWeight: 600 }}>{e.expertName}</td>
+                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{e.expertNumber}</td>
+                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{e.expertEmail}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[0.75rem] text-emerald-700 bg-emerald-50" style={{ fontWeight: 600 }}>
+                        {e.expertState || "-"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{e.sAddress}</td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex gap-1.5">
+                        <button
+                          onClick={() => { setSelectedExpert(e); setExpertForm({ expertName: e.expertName, expertNumber: e.expertNumber, expertEmail: e.expertEmail, expertState: e.expertState, sAddress: e.sAddress }); setExpertModal("edit"); }}
+                          className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg text-[0.75rem] hover:bg-blue-100 transition-colors" style={{ fontWeight: 600 }}
+                        >수정</button>
+                        <button
+                          onClick={() => handleExpertDelete(e.expertId)}
+                          className="px-2.5 py-1 bg-red-50 text-red-700 rounded-lg text-[0.75rem] hover:bg-red-100 transition-colors" style={{ fontWeight: 600 }}
+                        >삭제</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 전문가 등록/수정 모달 */}
+      {expertModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md border border-border">
+            <p className="text-[1rem] text-gray-900 mb-5" style={{ fontWeight: 700 }}>
+              {expertModal === "add" ? "전문가 등록" : "전문가 수정"}
+            </p>
+            <div className="space-y-3">
+              {[
+                { label: "이름", key: "expertName", placeholder: "홍길동" },
+                { label: "연락처", key: "expertNumber", placeholder: "010-0000-0000" },
+                { label: "이메일", key: "expertEmail", placeholder: "expert@email.com" },
+                { label: "주소", key: "sAddress", placeholder: "서울특별시..." },
+              ].map(({ label, key, placeholder }) => (
+                <div key={key}>
+                  <p className="text-[0.8125rem] text-gray-500 mb-1">{label}</p>
+                  <input
+                    value={expertForm[key as keyof typeof expertForm]}
+                    onChange={(e) => setExpertForm(prev => ({ ...prev, [key]: e.target.value }))}
+                    placeholder={placeholder}
+                    className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-[0.875rem] outline-none focus:border-[#52B788] focus:ring-2 focus:ring-[#52B788]"
+                  />
+                </div>
+              ))}
+              <div>
+                <p className="text-[0.8125rem] text-gray-500 mb-1">상태</p>
+                <select
+                  value={expertForm.expertState}
+                  onChange={(e) => setExpertForm(prev => ({ ...prev, expertState: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-[0.875rem] outline-none focus:border-[#52B788] focus:ring-2 focus:ring-[#52B788]"
+                >
+                  <option value="">상태 선택</option>
+                  <option value="가용">가용</option>
+                  <option value="휴직">휴직</option>
+                  <option value="파견">파견</option>
+                  <option value="퇴직">퇴직</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button onClick={() => setExpertModal(null)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-[0.875rem] text-gray-500 hover:bg-gray-50" style={{ fontWeight: 500 }}>취소</button>
+              <button onClick={handleExpertSave} className="flex-1 py-2.5 rounded-xl bg-[#2D6A4F] text-white text-[0.875rem] hover:bg-[#235c43]" style={{ fontWeight: 600 }}>저장</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
