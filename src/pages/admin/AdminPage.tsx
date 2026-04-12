@@ -52,33 +52,9 @@ interface ExpertItem {
   sAddress: string;
 }
 
-type AppStatus = "pending" | "reviewing" | "approved" | "rejected";
-
-interface Application {
-  id: string; company: string; species: string; qty: number; location: string; date: string; status: AppStatus;
-}
-
-const mockApps: Application[] = [
-  { id: "APP-0318", company: "그린테크(주)", species: "소나무 외 2종", qty: 120, location: "경기 용인", date: "2026-03-18", status: "pending" },
-  { id: "APP-0317", company: "에코솔루션", species: "참나무 외 1종", qty: 80, location: "충남 천안", date: "2026-03-17", status: "reviewing" },
-  { id: "APP-0316", company: "한국에너지공사", species: "편백나무", qty: 200, location: "전북 전주", date: "2026-03-16", status: "approved" },
-  { id: "APP-0315", company: "동아제약", species: "느티나무 외 2종", qty: 50, location: "경기 안산", date: "2026-03-15", status: "approved" },
-  { id: "APP-0314", company: "그린빌딩(주)", species: "은행나무", qty: 30, location: "서울 강남", date: "2026-03-14", status: "rejected" },
-  { id: "APP-0312", company: "테크노파크", species: "소나무 외 1종", qty: 150, location: "대전 유성", date: "2026-03-12", status: "pending" },
-];
-
-const statusMap: Record<AppStatus, { label: string; color: string; icon: any }> = {
-  pending: { label: "대기", color: "text-amber-700 bg-amber-50", icon: Clock },
-  reviewing: { label: "검토중", color: "text-blue-700 bg-blue-50", icon: Eye },
-  approved: { label: "승인", color: "text-emerald-700 bg-emerald-50", icon: CheckCircle2 },
-  rejected: { label: "반려", color: "text-red-700 bg-red-50", icon: XCircle },
-};
-
 export function AdminPage() {
-  const [apps, setApps] = useState(mockApps);
-  const [filter, setFilter] = useState<AppStatus | "all">("all");
-  const [tab, setTab] = useState<"approval" | "applications" | "memberList" | "experts">("approval");
-  const [approvalTab, setApprovalTab] = useState<"members" | "companyRequests">("companyRequests");
+
+  
 
   const [members, setMembers] = useState<MemberPending[]>([]);
   const [companyReqs, setCompanyReqs] = useState<CompanyPending[]>([]);
@@ -89,6 +65,9 @@ export function AdminPage() {
   const [expertModal, setExpertModal] = useState<"add" | "edit" | null>(null);
   const [selectedExpert, setSelectedExpert] = useState<ExpertItem | null>(null);
   const [expertForm, setExpertForm] = useState({ expertName: "", expertNumber: "", expertEmail: "", expertState: "", sAddress: "" });
+  const [tab, setTab] = useState<"approval" | "applications" | "inProgress" | "memberList" | "experts">("approval");
+  const [approvalTab, setApprovalTab] = useState<"members" | "companyRequests">("companyRequests");
+  const [allVisits, setAllVisits] = useState<ApplicationDto[]>([]); // 전체 기업 신청목록
 
   const token = localStorage.getItem("token");
 
@@ -148,16 +127,6 @@ export function AdminPage() {
     } catch (err) { alert("삭제에 실패했습니다."); }
   };
 
-  useEffect(() => {
-    fetchPendingMembers();
-    fetchPendingCompanies();
-  }, []);
-
-  useEffect(() => {
-    if (tab === "memberList") fetchCompanyList();
-    if (tab === "experts") fetchExpertList();
-  }, [tab]);
-
   const handleMemberAction = async (mid: number, action: "approve" | "reject") => {
     try {
       await axios.patch(`/api/admin/member/${mid}/${action}`, null, { headers: { Authorization: token } });
@@ -177,11 +146,68 @@ export function AdminPage() {
     fetchCompanyMembers(company.companyId);
   };
 
-  const filtered = filter === "all" ? apps : apps.filter((a) => a.status === filter);
+interface ApplicationDto {
+  detailId: number; memberId: number; companyName: string; 
+  surveyStatus: string; requestStatus: string; dueStartDate: string; dueEndDate: string;
+}
 
-  const handleAction = (id: string, action: AppStatus) => {
-    setApps((prev) => prev.map((a) => (a.id === id ? { ...a, status: action } : a)));
+const statusMap: Record<string, { label: string; color: string; icon: any }> = {
+  "승인대기": { label: "승인 대기", color: "text-amber-700 bg-amber-50", icon: Clock },
+  "반려": { label: "반려됨", color: "text-red-700 bg-red-50", icon: XCircle },
+  "승인완료": { label: "배정 대기", color: "text-blue-700 bg-blue-50", icon: Eye },
+  "진행중": { label: "답사 진행중", color: "text-emerald-700 bg-emerald-50", icon: CheckCircle2 },
+  "완료": { label: "답사 완료", color: "text-gray-700 bg-gray-100", icon: CheckCircle2 },
+};
+  // 모든 답사 내역 조회 API 연동
+  const fetchVisits = async() => {
+    try{
+      const response = await axios.get(`/api/admin/visits`, {headers: {Authorization : token} });
+      setAllVisits(response.data);
+    }catch(error){
+      console.error("답사 내역 로드 실패:", error);
+    }
   };
+
+
+  // 기업 답사신청 승인/반려 API 연동
+  const handleVisitPermission = async (detailId: number, status: "승인"|"반려") => {
+    try{
+      let opnion =""; // 반려일 경우 사유 입력
+      if( status === "반려"){
+        const input = window.prompt("반려 사유를 입력해주세요:");
+        if(input === null) return; // 취소 누르면 api 호출 안함
+        opnion = input;
+      }
+
+      await axios.put('/api/admin/visit/permisson', {
+        detailId, responseStatus: status, opnion
+      }, {headers: {Authorization: token} });
+
+      alert(`답사 신청이 ${status} 처리되었습니다.`);
+      fetchVisits(); // 상태 바뀐 후 전체 목록 가져오기
+    }catch(error){
+      console.error(error);
+      alert("상태변경에 실패했습니다.")
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingMembers();
+    fetchPendingCompanies();
+    fetchVisits(); // 페이지 첫 로드 시 답사 내역 불러오기
+  }, []);
+
+  useEffect(() => {
+    if( tab === "memberList") fetchCompanyList();
+    if( tab === "experts") fetchExpertList();
+  }, [tab]);
+
+  // 탭별로 보여줄 데이터 필터링
+  // [답사신청 관리] : '신청', '반려'건만 표시
+  const applicationVisits = allVisits.filter(v => v.surveyStatus === "승인대기" || v.surveyStatus === "반려");
+  // [진행중인 답사] : 승인 완료되어 일정 진행되는 건들만 표시
+  const inProgressVisits = allVisits.filter(v => v.surveyStatus === "승인완료" || v.surveyStatus === "답사 진행중")
+
 
   return (
     <div className="space-y-6">
@@ -196,7 +222,7 @@ export function AdminPage() {
           { label: "등록 기업", value: String(companyList.length || "-"), icon: Building2, change: "전체", bg: "bg-blue-50", iconColor: "text-blue-600" },
           { label: "회원가입 대기", value: String(members.length), icon: User, change: "처리 필요", bg: "bg-amber-50", iconColor: "text-amber-600" },
           { label: "기업등록 대기", value: String(companyReqs.length), icon: Building2, change: "처리 필요", bg: "bg-orange-50", iconColor: "text-orange-600" },
-          { label: "탄소흡수량", value: "182.4t", icon: TrendingUp, change: "+8.2%", bg: "bg-purple-50", iconColor: "text-purple-600" },
+          { label: "기업 답사 현황",value: String(allVisits.length), icon: TrendingUp, change: "+8.2%", bg: "bg-purple-50", iconColor: "text-purple-600" },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-5">
             <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center mb-3`}>
@@ -214,10 +240,11 @@ export function AdminPage() {
       {/* 메인 탭 */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
         {[
-          { key: "approval" as const, label: "승인 관리" },
-          { key: "applications" as const, label: "신청 관리" },
           { key: "memberList" as const, label: "등록 기업" },
-          { key: "experts" as const, label: "전문가 관리" },
+          { key: "approval" as const, label: "승인 관리" },
+          { key: "applications" as const, label: "답사신청 관리" },
+          { key: "inProgress" as const, label: "진행중인 답사" },
+          { key: "experts" as const, label: "전문가 목록" },
         ].map((t) => (
           <button
             key={t.key}
@@ -332,74 +359,105 @@ export function AdminPage() {
         </div>
       )}
 
-      {/* 신청 관리 탭 */}
+    {/* [3] 답사신청 관리 탭 (승인 대기 및 반려) */}
       {tab === "applications" && (
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="flex gap-1 p-3 border-b border-gray-100 bg-gray-50">
-            {(["all", "pending", "reviewing", "approved", "rejected"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[0.875rem] transition-all ${
-                  filter === f ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-                }`}
-                style={{ fontWeight: 600 }}
-              >
-                {f === "all" ? "전체" : statusMap[f].label}
-                {f !== "all" && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-600 text-[0.6875rem]" style={{ fontWeight: 700 }}>
-                    {apps.filter(a => a.status === f).length}
-                  </span>
-                )}
-              </button>
-            ))}
+          <div className="px-5 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+            <p className="text-[0.875rem] text-gray-500" style={{ fontWeight: 600 }}>기업이 등록한 신규 답사 신청을 승인하거나 반려합니다.</p>
+            <span className="text-[0.8rem] text-amber-600 bg-amber-50 px-2 py-1 rounded-md font-bold">
+              대기중인 신청: {applicationVisits.filter(v => v.surveyStatus === '승인대기').length}건
+            </span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 text-[0.75rem] text-gray-500 uppercase tracking-wider" style={{ fontWeight: 600 }}>
-                  <th className="text-left px-5 py-3">신청번호</th>
-                  <th className="text-left px-5 py-3">기업명</th>
-                  <th className="text-left px-5 py-3">수종</th>
-                  <th className="text-left px-5 py-3">수량</th>
-                  <th className="text-left px-5 py-3">위치</th>
+                  <th className="text-left px-5 py-3">답사번호</th>
+                  <th className="text-left px-5 py-3">기업명(번호)</th>
+                  <th className="text-left px-5 py-3">신청 기간</th>
                   <th className="text-left px-5 py-3">상태</th>
-                  <th className="text-left px-5 py-3">처리</th>
+                  <th className="text-left px-5 py-3">승인/반려 처리</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((app) => {
-                  const st = statusMap[app.status];
-                  const StIcon = st.icon;
-                  return (
-                    <tr key={app.id} className="border-t border-gray-50 hover:bg-gray-50/50">
-                      <td className="px-5 py-3.5 text-[0.85rem] text-gray-900" style={{ fontWeight: 600 }}>{app.id}</td>
-                      <td className="px-5 py-3.5 text-[0.85rem] text-gray-700">{app.company}</td>
-                      <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{app.species}</td>
-                      <td className="px-5 py-3.5 text-[0.85rem] text-gray-700">{app.qty}그루</td>
-                      <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{app.location}</td>
-                      <td className="px-5 py-3.5">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.75rem] ${st.color}`} style={{ fontWeight: 600 }}>
-                          <StIcon className="w-3 h-3" />{st.label}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        {(app.status === "pending" || app.status === "reviewing") && (
-                          <div className="flex gap-1.5">
-                            <button onClick={() => handleAction(app.id, "approved")} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[0.75rem] hover:bg-emerald-100 transition-colors" style={{ fontWeight: 600 }}>승인</button>
-                            <button onClick={() => handleAction(app.id, "rejected")} className="px-2.5 py-1 bg-red-50 text-red-700 rounded-lg text-[0.75rem] hover:bg-red-100 transition-colors" style={{ fontWeight: 600 }}>반려</button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {applicationVisits.length === 0 ? (
+                  <tr><td colSpan={5} className="px-5 py-8 text-center text-gray-400 text-[0.875rem]">새로운 답사 신청이 없습니다.</td></tr>
+                ) : (
+                  applicationVisits.map((app) => {
+                    const st = statusMap[app.surveyStatus] || statusMap["승인대기"];
+                    const StIcon = st.icon;
+                    return (
+                      <tr key={app.detailId} className="border-t border-gray-50 hover:bg-gray-50/50">
+                        <td className="px-5 py-3.5 text-[0.85rem] text-gray-900" style={{ fontWeight: 600 }}>No. {app.detailId}</td>
+                        <td className="px-5 py-3.5 text-[0.85rem] text-gray-700">{app.companyName || `기업코드(${app.memberId})`}</td>
+                        <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{app.dueStartDate} ~ {app.dueEndDate}</td>
+                        <td className="px-5 py-3.5">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.75rem] ${st.color}`} style={{ fontWeight: 600 }}>
+                            <StIcon className="w-3 h-3" />{st.label}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {app.surveyStatus === "승인대기" ? (
+                            <div className="flex gap-1.5">
+                              <button onClick={() => handleVisitPermission(app.detailId, "승인")} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[0.75rem] hover:bg-emerald-100 transition-colors" style={{ fontWeight: 600 }}>승인</button>
+                              <button onClick={() => handleVisitPermission(app.detailId, "반려")} className="px-2.5 py-1 bg-red-50 text-red-700 rounded-lg text-[0.75rem] hover:bg-red-100 transition-colors" style={{ fontWeight: 600 }}>반려</button>
+                            </div>
+                          ) : (
+                            <span className="text-[0.75rem] text-gray-400">처리 완료 (반려됨)</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
+      {/* [4] 진행중인 답사 탭 */}
+      {tab === "inProgress" && (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 bg-gray-50">
+            <p className="text-[0.875rem] text-gray-500" style={{ fontWeight: 600 }}>승인 완료 및 일정이 진행 중인 답사 목록입니다.</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 text-[0.75rem] text-gray-500 uppercase tracking-wider" style={{ fontWeight: 600 }}>
+                  <th className="text-left px-5 py-3">답사번호</th>
+                  <th className="text-left px-5 py-3">기업명(번호)</th>
+                  <th className="text-left px-5 py-3">답사 일정</th>
+                  <th className="text-left px-5 py-3">현재 상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inProgressVisits.length === 0 ? (
+                  <tr><td colSpan={4} className="px-5 py-8 text-center text-gray-400 text-[0.875rem]">진행 중인 답사가 없습니다.</td></tr>
+                ) : (
+                  inProgressVisits.map((app) => {
+                    const st = statusMap[app.surveyStatus] || statusMap["승인완료"];
+                    const StIcon = st.icon;
+                    return (
+                      <tr key={app.detailId} className="border-t border-gray-50 hover:bg-gray-50/50">
+                        <td className="px-5 py-3.5 text-[0.85rem] text-gray-900" style={{ fontWeight: 600 }}>No. {app.detailId}</td>
+                        <td className="px-5 py-3.5 text-[0.85rem] text-gray-700">{app.companyName || `기업코드(${app.memberId})`}</td>
+                        <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{app.dueStartDate} ~ {app.dueEndDate}</td>
+                        <td className="px-5 py-3.5">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.75rem] ${st.color}`} style={{ fontWeight: 600 }}>
+                            <StIcon className="w-3 h-3" />{st.label}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* 등록 기업 탭 */}
       {tab === "memberList" && (
