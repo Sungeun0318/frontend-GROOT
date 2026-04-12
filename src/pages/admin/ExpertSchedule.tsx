@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   CalendarDays,
   User,
@@ -11,6 +11,7 @@ import {
   Clock,
   Ban,
 } from "lucide-react";
+import axios from "axios";
 
 interface Expert {
   expertId: number;
@@ -29,25 +30,11 @@ interface Schedule {
   scheduleState: string;
 }
 
-const mockExperts: Expert[] = [
-  { expertId: 1, expertName: "김전문", expertNumber: "010-1111-2222", expertEmail: "kim@expert.com", expertState: "가용", sAddress: "서울시 강남구" },
-  { expertId: 2, expertName: "이전문", expertNumber: "010-3333-4444", expertEmail: "lee@expert.com", expertState: "배정중", sAddress: "경기도 수원시" },
-  { expertId: 3, expertName: "박전문", expertNumber: "010-5555-6666", expertEmail: "park@expert.com", expertState: "가용", sAddress: "인천시 연수구" },
-  { expertId: 4, expertName: "최전문", expertNumber: "010-7777-8888", expertEmail: "choi@expert.com", expertState: "가용", sAddress: "대전시 유성구" },
-];
-
-const mockSchedules: Schedule[] = [
-  { visitId: 1, expertId: 1, scheduleStart: "2025-04-07", scheduleEnd: "2025-04-09", scheduleState: "불가" },
-  { visitId: 2, expertId: 1, scheduleStart: "2025-04-14", scheduleEnd: "2025-04-14", scheduleState: "불가" },
-  { visitId: 3, expertId: 2, scheduleStart: "2025-04-07", scheduleEnd: "2025-04-08", scheduleState: "불가" },
-  { visitId: 4, expertId: 2, scheduleStart: "2025-04-21", scheduleEnd: "2025-04-23", scheduleState: "불가" },
-  { visitId: 5, expertId: 3, scheduleStart: "2025-04-10", scheduleEnd: "2025-04-12", scheduleState: "불가" },
-  { visitId: 6, expertId: 4, scheduleStart: "2025-04-07", scheduleEnd: "2025-04-07", scheduleState: "불가" },
-];
-
 const stateColors: Record<string, { color: string; bg: string }> = {
   "가용": { color: "#22C55E", bg: "#22C55E15" },
-  "배정중": { color: "#3B82F6", bg: "#3B82F615" },
+  "파견": { color: "#3B82F6", bg: "#3B82F615" },
+  "휴직": { color: "#EAB308", bg: "#EAB30815" },
+  "퇴직": { color: "#6B7280", bg: "#6B728015" },
 };
 
 function getMonthDays(year: number, month: number) {
@@ -67,17 +54,6 @@ function isInRange(date: string, start: string, end: string) {
   return date >= start && date <= end;
 }
 
-// 해당 날짜에 불가인 전문가 ID 목록
-function getBlockedExpertIds(dateStr: string): number[] {
-  const ids = new Set<number>();
-  for (const s of mockSchedules) {
-    if (isInRange(dateStr, s.scheduleStart, s.scheduleEnd)) {
-      ids.add(s.expertId);
-    }
-  }
-  return Array.from(ids);
-}
-
 export function ExpertSchedule() {
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
@@ -87,6 +63,35 @@ export function ExpertSchedule() {
   const [addExpertId, setAddExpertId] = useState<number | "">("");
   const [newStart, setNewStart] = useState("");
   const [newEnd, setNewEnd] = useState("");
+  const [newState, setNewState] = useState("");
+
+  const [experts, setExperts] = useState<Expert[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+
+  // 전문가 목록 조회
+  const fetchExperts = async () => {
+    try {
+      const res = await axios.get("http://localhost:8080/api/specialist");
+      setExperts(res.data);
+    } catch (e) {
+      console.error("전문가 목록 조회 실패:", e);
+    }
+  };
+
+  // 스케줄 전체 조회
+  const fetchSchedules = async () => {
+    try {
+      const res = await axios.get("http://localhost:8080/api/schedule/List");
+      setSchedules(res.data);
+    } catch (e) {
+      console.error("스케줄 조회 실패:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchExperts();
+    fetchSchedules();
+  }, []);
 
   const days = getMonthDays(viewYear, viewMonth);
   const monthLabel = `${viewYear}년 ${viewMonth + 1}월`;
@@ -103,15 +108,49 @@ export function ExpertSchedule() {
     setSelectedDate(null);
   };
 
+  // 해당 날짜에 불가인 전문가 ID 목록
+  function getBlockedExpertIds(dateStr: string): number[] {
+    const ids = new Set<number>();
+    for (const s of schedules) {
+      if (isInRange(dateStr, s.scheduleStart, s.scheduleEnd)) {
+        ids.add(s.expertId);
+      }
+    }
+    return Array.from(ids);
+  }
+
   // 선택한 날짜에 불가인 전문가들
   const blockedIds = selectedDate ? getBlockedExpertIds(selectedDate) : [];
-  const blockedExperts = mockExperts.filter((e) => blockedIds.includes(e.expertId));
-  const availableExperts = mockExperts.filter((e) => !blockedIds.includes(e.expertId));
+  const blockedExperts = experts.filter((e) => blockedIds.includes(e.expertId));
+  const availableExperts = experts.filter((e) => !blockedIds.includes(e.expertId) && e.expertState === "가용");
 
   // 선택한 날짜에 해당하는 스케줄 상세
   const dateSchedules = selectedDate
-    ? mockSchedules.filter((s) => isInRange(selectedDate, s.scheduleStart, s.scheduleEnd))
+    ? schedules.filter((s) => isInRange(selectedDate, s.scheduleStart, s.scheduleEnd))
     : [];
+
+  // 불가 일정 등록
+  const handleAddSchedule = async () => {
+    if (!addExpertId || !newStart || !newEnd) return;
+    try {
+      await axios.post("http://localhost:8080/api/schedule", {
+        expertId: addExpertId,
+        scheduleStart: newStart,
+        scheduleEnd: newEnd,
+        scheduleState: newState || "불가",
+      });
+      // 새로고침
+      await fetchSchedules();
+      setShowAddModal(false);
+      setAddExpertId("");
+      setNewStart("");
+      setNewEnd("");
+      setNewState("");
+    } catch (e) {
+      console.error("일정 등록 실패:", e);
+      alert("일정 등록에 실패했습니다.");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -161,6 +200,7 @@ export function ExpertSchedule() {
                 const isToday = dateStr === todayStr;
                 const isSelected = dateStr === selectedDate;
                 const dayOfWeek = (new Date(viewYear, viewMonth, day)).getDay();
+                const totalAvailable = experts.filter(e => e.expertState === "가용").length;
 
                 return (
                   <button
@@ -181,9 +221,9 @@ export function ExpertSchedule() {
                     {blockedCount > 0 && (
                       <span className={`text-[0.6rem] mt-0.5 ${
                         isSelected ? "text-white/80" :
-                        blockedCount === mockExperts.length ? "text-[#EF4444]" : "text-[#EAB308]"
+                        blockedCount >= totalAvailable ? "text-[#EF4444]" : "text-[#EAB308]"
                       }`} style={{ fontWeight: 600 }}>
-                        {blockedCount === mockExperts.length ? "전원불가" : `${blockedCount}명 불가`}
+                        {blockedCount >= totalAvailable ? "전원불가" : `${blockedCount}명 불가`}
                       </span>
                     )}
                   </button>
@@ -255,12 +295,19 @@ export function ExpertSchedule() {
                             </span>
                           </div>
                           {sch && (
-                            <div className="flex items-center gap-1 text-[0.75rem] text-muted-foreground">
-                              <Clock className="w-3 h-3" />
-                              {sch.scheduleStart === sch.scheduleEnd
-                                ? sch.scheduleStart
-                                : `${sch.scheduleStart} ~ ${sch.scheduleEnd}`}
-                            </div>
+                            <>
+                              <div className="flex items-center gap-1 text-[0.75rem] text-muted-foreground">
+                                <Clock className="w-3 h-3" />
+                                {sch.scheduleStart === sch.scheduleEnd
+                                  ? sch.scheduleStart
+                                  : `${sch.scheduleStart} ~ ${sch.scheduleEnd}`}
+                              </div>
+                              {sch.scheduleState && (
+                                <p className="text-[0.75rem] text-[#EF4444]/70 mt-0.5">
+                                  사유: {sch.scheduleState}
+                                </p>
+                              )}
+                            </>
                           )}
                           <div className="flex items-center gap-3 text-[0.75rem] text-muted-foreground mt-1">
                             <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{exp.expertNumber}</span>
@@ -335,10 +382,20 @@ export function ExpertSchedule() {
                   className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FA] border border-border focus:ring-2 focus:ring-[#52B788] focus:border-transparent outline-none text-[0.875rem]"
                 >
                   <option value="">전문가를 선택하세요</option>
-                  {mockExperts.map((exp) => (
+                  {experts.filter(e => e.expertState === "가용").map((exp) => (
                     <option key={exp.expertId} value={exp.expertId}>{exp.expertName} ({exp.sAddress})</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="text-[0.8125rem] text-[#2D2D2D] mb-1.5 block" style={{ fontWeight: 600 }}>사유</label>
+                <input
+                  type="text"
+                  value={newState}
+                  onChange={(e) => setNewState(e.target.value)}
+                  placeholder="예: 개인 휴가, 해외 출장"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#F8F9FA] border border-border focus:ring-2 focus:ring-[#52B788] focus:border-transparent outline-none text-[0.875rem]"
+                />
               </div>
               <div>
                 <label className="text-[0.8125rem] text-[#2D2D2D] mb-1.5 block" style={{ fontWeight: 600 }}>시작일</label>
@@ -370,19 +427,7 @@ export function ExpertSchedule() {
                 취소
               </button>
               <button
-                onClick={() => {
-                  // TODO: axios 연동
-                  // await axios.post("/api/schedule", {
-                  //   expertId: addExpertId,
-                  //   scheduleStart: newStart,
-                  //   scheduleEnd: newEnd,
-                  //   scheduleState: "불가",
-                  // });
-                  setShowAddModal(false);
-                  setAddExpertId("");
-                  setNewStart("");
-                  setNewEnd("");
-                }}
+                onClick={handleAddSchedule}
                 disabled={!addExpertId || !newStart || !newEnd}
                 className={`flex-1 py-2.5 rounded-xl text-[0.875rem] transition-colors ${
                   addExpertId && newStart && newEnd

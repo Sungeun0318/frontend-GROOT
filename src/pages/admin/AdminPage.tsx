@@ -172,15 +172,15 @@ const statusMap: Record<string, { label: string; color: string; icon: any }> = {
   // 기업 답사신청 승인/반려 API 연동
   const handleVisitPermission = async (detailId: number, status: "승인"|"반려") => {
     try{
-      let opnion =""; // 반려일 경우 사유 입력
+      let opinion =""; // 반려일 경우 사유 입력
       if( status === "반려"){
         const input = window.prompt("반려 사유를 입력해주세요:");
         if(input === null) return; // 취소 누르면 api 호출 안함
-        opnion = input;
+        opinion = input;
       }
 
-      await axios.put('/api/admin/visit/permisson', {
-        detailId, responseStatus: status, opnion
+      await axios.put('/api/admin/visit/permission', {
+        detailId, requestStatus: status, opinion
       }, {headers: {Authorization: token} });
 
       alert(`답사 신청이 ${status} 처리되었습니다.`);
