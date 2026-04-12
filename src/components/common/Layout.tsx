@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import {
   LayoutDashboard,
@@ -43,12 +44,20 @@ export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // TODO: 로그인 연동 후 토큰에서 isAdmin 값을 읽어오기
-  // 지금은 true로 해서 관리자 메뉴가 항상 보이게 함
-  const isAdmin = true;
+  const [userInfo, setUserInfo] = useState<any>(null);
+  const isAdmin = localStorage.getItem("isAdmin") === "1";
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    if (token) {
+      axios.get("/api/member/myinfo", { headers: { token } })
+        .then(res => setUserInfo(res.data));
+    }
+  }, []);
   const navItems = getNavItems(isAdmin);
 
   // Landing, login, signup pages don't use sidebar layout
-  if (["/", "/login", "/signup" ,"/company-register", "/select-register"].includes(location.pathname)) {
+  if (["/", "/login", "/signup", "/company-register", "/select-register"].includes(location.pathname)) {
     return <Outlet />;
   }
 
@@ -64,9 +73,8 @@ export function Layout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#2D6A4F] text-white flex flex-col transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#2D6A4F] text-white flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }`}
       >
         <div className="p-2 flex items-center gap-2 border-b border-white/10">
           <GrootLogo size="xl" theme="light" />
@@ -81,10 +89,9 @@ export function Layout() {
                 to={item.to}
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                    isActive
-                      ? "bg-[#52B788] text-white"
-                      : "text-white/70 hover:bg-white/10 hover:text-white"
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive
+                    ? "bg-[#52B788] text-white"
+                    : "text-white/70 hover:bg-white/10 hover:text-white"
                   }`
                 }
               >
@@ -108,11 +115,9 @@ export function Layout() {
                 className="text-[0.875rem] text-white truncate"
                 style={{ fontWeight: 500 }}
               >
-                그린테크 주식회사
-              </p>
+                {isAdmin ? (userInfo?.party_name ?? "로딩중...") : (userInfo?.companyName ?? "로딩중...")}              </p>
               <p className="text-[0.75rem] text-white/60 truncate">
-                kim@greentech.co.kr
-              </p>
+                {userInfo?.email ?? ""}              </p>
             </div>
           </div>
           <button
