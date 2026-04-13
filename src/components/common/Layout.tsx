@@ -53,7 +53,7 @@ export function Layout() {
       axios.get("/api/member/myinfo", { headers: { token } })
         .then(res => setUserInfo(res.data));
     }
-  }, []);
+  }, [token]);
   const navItems = getNavItems(isAdmin);
 
   // Landing, login, signup pages don't use sidebar layout
