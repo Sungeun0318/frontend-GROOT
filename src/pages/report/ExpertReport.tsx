@@ -34,13 +34,6 @@ interface ApplicationDto {
   surveyStatus: string;
 }
 
-interface TempSaveDto {
-  detailId: number;
-  opinion: string;
-  sitePicture: string | null;
-  tempData: string | null;
-}
-
 type TreeStatus = "양호" | "보통" | "불량";
 type TreeKind = "broadleaf" | "conifer" | "";
 
@@ -77,18 +70,6 @@ interface TreeMeasurement {
   longitude: string | null;
 }
 
-interface TempMeasurement {
-  treeType: string | null;
-  kind: TreeKind;
-  dbh: string | null;
-  height: string | null;
-  width: string | null;
-  treeStatus: TreeStatus;
-  picture: string | null;
-  latitude: string | null;
-  longitude: string | null;
-}
-
 const speciesOptions = [
   "소나무",
   "참나무",
@@ -114,23 +95,6 @@ const createEmptyMeasurement = (): TreeMeasurement => ({
   longitude: null,
 });
 
-const isBase64Image = (value: string | null) =>
-  !!value && value.startsWith("data:image/");
-
-const fileToDataUrl = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
-const dataUrlToFile = async (dataUrl: string, fileName: string): Promise<File> => {
-  const res = await fetch(dataUrl);
-  const blob = await res.blob();
-  return new File([blob], fileName, { type: blob.type || "image/jpeg" });
-};
-
 export function ExpertReport() {
   const { detailId } = useParams<{ detailId: string }>();
 
@@ -143,7 +107,6 @@ export function ExpertReport() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [tempSaving, setTempSaving] = useState(false);
   const [isLinkValid, setIsLinkValid] = useState<boolean | null>(null);
 
   const [measurements, setMeasurements] = useState<TreeMeasurement[]>([
@@ -174,52 +137,13 @@ export function ExpertReport() {
 
         setIsLinkValid(true);
 
-        const [basicRes, roundRes, tempRes] = await Promise.all([
+        const [basicRes, roundRes] = await Promise.all([
           axios.get(`http://localhost:8080/api/expert-reports/basic/${detailId}`),
           axios.get(`http://localhost:8080/api/expert-reports/${detailId}`),
-          axios.get(`http://localhost:8080/api/temp-save/${detailId}`).catch(() => ({ data: null })),
         ]);
 
         setBasicInfo(basicRes.data);
         setCompletedRounds(roundRes.data || []);
-
-        const tempData: TempSaveDto | null = tempRes.data;
-        if (tempData) {
-          if (tempData.opinion) {
-            setOpinion(tempData.opinion);
-          }
-
-          if (tempData.sitePicture) {
-            setSitePicture(tempData.sitePicture);
-            setSitePictureFile(null);
-          }
-
-          if (tempData.tempData) {
-            try {
-              const parsed: TempMeasurement[] = JSON.parse(tempData.tempData);
-
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                const restoredMeasurements: TreeMeasurement[] = parsed.map((item, index) => ({
-                  id: String(Date.now() + index + Math.random()),
-                  treeType: item.treeType ?? null,
-                  kind: item.kind ?? "",
-                  dbh: item.dbh ?? null,
-                  height: item.height ?? null,
-                  width: item.width ?? null,
-                  treeStatus: item.treeStatus ?? "양호",
-                  picture: item.picture ?? null,
-                  pictureFile: null,
-                  latitude: item.latitude ?? null,
-                  longitude: item.longitude ?? null,
-                }));
-
-                setMeasurements(restoredMeasurements);
-              }
-            } catch (error) {
-              console.error("임시 저장 데이터 파싱 실패", error);
-            }
-          }
-        }
       } catch (error) {
         console.error("초기 데이터 조회 실패", error);
         setIsLinkValid(false);
@@ -313,78 +237,6 @@ export function ExpertReport() {
 
   const selectedPreviousMeasurements = previousRoundData;
 
-  const handleTempSave = async () => {
-    if (!detailId) {
-      alert("detailId가 없습니다.");
-      return;
-    }
-
-    if (isLinkValid === false) {
-      alert("만료된 링크입니다.");
-      return;
-    }
-
-    try {
-      setTempSaving(true);
-
-      const tempMeasurements = await Promise.all(
-        measurements.map(async (m) => {
-          let pictureValue = m.picture;
-
-          if (m.pictureFile) {
-            pictureValue = await fileToDataUrl(m.pictureFile);
-          }
-
-          return {
-            treeType: m.treeType,
-            kind: m.kind,
-            dbh: m.dbh,
-            height: m.height,
-            width: m.width,
-            treeStatus: m.treeStatus,
-            picture: pictureValue,
-            latitude: m.latitude,
-            longitude: m.longitude,
-          };
-        })
-      );
-
-      let sitePictureValue = sitePicture;
-      if (sitePictureFile) {
-        sitePictureValue = await fileToDataUrl(sitePictureFile);
-      }
-
-      const payload: TempSaveDto = {
-        detailId: Number(detailId),
-        opinion,
-        sitePicture: sitePictureValue,
-        tempData: JSON.stringify(tempMeasurements),
-      };
-
-      await axios.post("http://localhost:8080/api/temp-save", payload);
-
-      if (sitePictureFile && sitePictureValue) {
-        setSitePicture(sitePictureValue);
-        setSitePictureFile(null);
-      }
-
-      setMeasurements((prev) =>
-        prev.map((m, index) => ({
-          ...m,
-          picture: tempMeasurements[index]?.picture ?? m.picture,
-          pictureFile: null,
-        }))
-      );
-
-      alert("임시 저장되었습니다.");
-    } catch (error) {
-      console.error("임시 저장 실패", error);
-      alert("임시 저장에 실패했습니다.");
-    } finally {
-      setTempSaving(false);
-    }
-  };
-
   const handleSubmit = async () => {
     if (!detailId) {
       alert("detailId가 없습니다.");
@@ -396,7 +248,7 @@ export function ExpertReport() {
       return;
     }
 
-    if (!sitePicture && !sitePictureFile) {
+    if (!sitePictureFile) {
       alert("전경 사진을 업로드해주세요.");
       return;
     }
@@ -420,42 +272,19 @@ export function ExpertReport() {
 
       const formData = new FormData();
       formData.append("data", JSON.stringify(data));
+      formData.append("site", sitePictureFile);
 
-      if (sitePictureFile) {
-        formData.append("site", sitePictureFile);
-      } else if (sitePicture && isBase64Image(sitePicture)) {
-        const siteFileFromBase64 = await dataUrlToFile(
-          sitePicture,
-          `site-${detailId}.png`
-        );
-        formData.append("site", siteFileFromBase64);
-      }
-
-      for (let i = 0; i < measurements.length; i++) {
-        const m = measurements[i];
-
+      measurements.forEach((m) => {
         if (m.pictureFile) {
           formData.append("files", m.pictureFile);
-        } else if (m.picture && isBase64Image(m.picture)) {
-          const treeFileFromBase64 = await dataUrlToFile(
-            m.picture,
-            `tree-${detailId}-${i + 1}.png`
-          );
-          formData.append("files", treeFileFromBase64);
         }
-      }
+      });
 
       await axios.post("http://localhost:8080/api/expert-reports", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-
-      try {
-        await axios.delete(`http://localhost:8080/api/temp-save/${detailId}`);
-      } catch (error) {
-        console.error("임시 저장 삭제 실패", error);
-      }
 
       setSubmitted(true);
     } catch (error) {
@@ -510,13 +339,7 @@ export function ExpertReport() {
         <p className="text-[0.85rem] text-gray-400 mb-8">
           관리자 검토 후 기업에게 결과가 전달됩니다.
         </p>
-        <button
-          onClick={() => setSubmitted(false)}
-          className="px-6 py-3 bg-[#2D6A4F] text-white rounded-xl hover:bg-[#245a42] transition-colors"
-          style={{ fontWeight: 600 }}
-        >
-          돌아가기
-        </button>
+        
       </div>
     );
   }
@@ -922,7 +745,7 @@ export function ExpertReport() {
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          onChange={async (e) => {
+                          onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
 
@@ -1046,8 +869,8 @@ export function ExpertReport() {
                               {prev.kind === "broadleaf"
                                 ? "활엽수"
                                 : prev.kind === "conifer"
-                                  ? "침엽수"
-                                  : "-"}
+                                ? "침엽수"
+                                : "-"}
                             </div>
                           </div>
 
@@ -1183,18 +1006,16 @@ export function ExpertReport() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <button
-          onClick={handleTempSave}
-          disabled={tempSaving || saving}
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors text-[0.95rem] disabled:opacity-50"
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors text-[0.95rem]"
           style={{ fontWeight: 600 }}
         >
           <Save className="w-4.5 h-4.5" />
-          {tempSaving ? "임시 저장 중..." : "임시 저장"}
+          임시 저장
         </button>
 
         <button
           onClick={handleSubmit}
-          disabled={saving || tempSaving}
+          disabled={saving}
           className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#2D6A4F] text-white hover:bg-[#245a42] transition-colors text-[0.95rem] shadow-lg shadow-[#2D6A4F]/20 disabled:opacity-50"
           style={{ fontWeight: 600 }}
         >
