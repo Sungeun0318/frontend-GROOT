@@ -62,6 +62,7 @@ export function Layout() {
   }
 
   return (
+
     <div className="flex h-screen overflow-hidden">
       {/* Mobile overlay */}
       {sidebarOpen && (
