@@ -508,9 +508,6 @@ export function KakaoMapCompanies({
             <p className="text-sm text-gray-500">조회된 나무 정보가 없습니다.</p>
           ) : (
             <>
-              <p className="mb-3 text-xs text-gray-500">
-                지도에서는 확대된 상태(레벨 {TREE_VISIBLE_LEVEL} 이하)에서만 나무 마커를 표시합니다.
-              </p>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {selectedTrees.map((tree, index) => (
