@@ -241,9 +241,14 @@ export function ApplicationForm() {
       } else {
         alert("답사 등록에 실패했습니다.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("답사 신청 실패:", error);
-      alert("답사 등록에 실패했습니다.");
+      const msg = error?.response?.data?.message || error?.response?.data;
+      if (typeof msg === "string" && msg.includes("이미 신청된")) {
+        alert("해당 날짜에 이미 신청된 답사가 있습니다. 다른 날짜를 선택해주세요.");
+      } else {
+        alert("답사 등록에 실패했습니다.");
+      }
     }
   };
 
