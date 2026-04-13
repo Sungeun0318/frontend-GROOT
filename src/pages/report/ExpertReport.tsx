@@ -177,8 +177,8 @@ export function ExpertReport() {
         setIsLinkValid(true);
 
         const [basicRes, roundRes] = await Promise.all([
-          axios.get(`http://localhost:8080/api/expert-reports/basic/${detailId}`),
-          axios.get(`http://localhost:8080/api/expert-reports/${detailId}`),
+          axios.get(`/api/expert-reports/basic/${detailId}`),
+          axios.get(`/api/expert-reports/${detailId}`),
         ]);
 
         setBasicInfo(basicRes.data);
@@ -351,7 +351,7 @@ export function ExpertReport() {
         }
       });
 
-      await axios.post("http://localhost:8080/api/expert-reports", formData, {
+      await axios.post("/api/expert-reports", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

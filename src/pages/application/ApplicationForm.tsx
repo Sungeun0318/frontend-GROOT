@@ -204,8 +204,8 @@ export function ApplicationForm() {
       try {
         const today = new Date().toISOString().split("T")[0];
         const [scheduleRes, expertRes] = await Promise.all([
-          axios.get(`http://localhost:8080/api/schedule/unavailable?startDate=${today}`),
-          axios.get("http://localhost:8080/api/specialist"),
+          axios.get(`/api/schedule/unavailable?startDate=${today}`),
+          axios.get("/api/specialist"),
         ]);
         setSchedules(scheduleRes.data);
         // 가용 상태인 전문가만 카운트
@@ -230,7 +230,7 @@ export function ApplicationForm() {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/applications/visit",
+        "/api/applications/visit",
         obj,
         { headers: { Authorization: `${token}` } }
       );

@@ -71,7 +71,7 @@ export function ExpertSchedule() {
   // 전문가 목록 조회
   const fetchExperts = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/specialist");
+      const res = await axios.get("/api/specialist");
       setExperts(res.data);
     } catch (e) {
       console.error("전문가 목록 조회 실패:", e);
@@ -81,7 +81,7 @@ export function ExpertSchedule() {
   // 스케줄 전체 조회
   const fetchSchedules = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/schedule/List");
+      const res = await axios.get("/api/schedule/List");
       setSchedules(res.data);
     } catch (e) {
       console.error("스케줄 조회 실패:", e);
@@ -133,7 +133,7 @@ export function ExpertSchedule() {
   const handleAddSchedule = async () => {
     if (!addExpertId || !newStart || !newEnd) return;
     try {
-      await axios.post("http://localhost:8080/api/schedule", {
+      await axios.post("/api/schedule", {
         expertId: addExpertId,
         scheduleStart: newStart,
         scheduleEnd: newEnd,

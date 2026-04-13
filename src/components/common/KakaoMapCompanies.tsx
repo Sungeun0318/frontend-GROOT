@@ -126,7 +126,7 @@ export function KakaoMapCompanies({
       setLoading(true);
       setMapError(false);
 
-      const response = await axios.get("http://localhost:8080/api/kakaomap");
+      const response = await axios.get("/api/kakaomap");
       const companyList: CompanyDto[] = Array.isArray(response.data) ? response.data : [];
 
       const results = await Promise.all(
@@ -159,7 +159,7 @@ export function KakaoMapCompanies({
     try {
       setTreeLoading(true);
 
-      const response = await axios.get(`http://localhost:8080/api/kakaomap/tree/${memberId}`);
+      const response = await axios.get(`/api/kakaomap/tree/${memberId}`);
       const treeList: TreeDto[] = Array.isArray(response.data) ? response.data : [];
 
       setSelectedTrees(treeList);
