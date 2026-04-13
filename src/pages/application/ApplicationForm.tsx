@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Ban,
-  UserCheck,
 } from "lucide-react";
 import axios from "axios";
 
@@ -36,11 +35,21 @@ function getMonthDays(year: number, month: number) {
   return days;
 }
 
-// 해당 날짜가 불가 일정 범위에 포함되는지 확인
-function isBlockedDate(dateStr: string, schedules: ScheduleItem[]): boolean {
-  return schedules.some(
-    (s) => dateStr >= s.scheduleStart && dateStr <= s.scheduleEnd
-  );
+// 해당 날짜에 불가인 전문가 ID 수 계산
+function getBlockedCount(dateStr: string, schedules: ScheduleItem[]): number {
+  const blockedIds = new Set<number>();
+  for (const s of schedules) {
+    if (dateStr >= s.scheduleStart && dateStr <= s.scheduleEnd) {
+      blockedIds.add(s.expertId);
+    }
+  }
+  return blockedIds.size;
+}
+
+// 가용 전문가 전원이 불가할 때만 신청 불가
+function isAllBlocked(dateStr: string, schedules: ScheduleItem[], totalAvailable: number): boolean {
+  if (totalAvailable === 0) return true;
+  return getBlockedCount(dateStr, schedules) >= totalAvailable;
 }
 
 // 미니 달력 컴포넌트
@@ -50,12 +59,14 @@ function MiniCalendar({
   schedules,
   label,
   minDate,
+  totalAvailable,
 }: {
   selectedDate: string;
   onSelect: (date: string) => void;
   schedules: ScheduleItem[];
   label: string;
   minDate?: string;
+  totalAvailable: number;
 }) {
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
@@ -115,11 +126,11 @@ function MiniCalendar({
           {days.map((day, idx) => {
             if (day === null) return <div key={`e-${idx}`} />;
             const dateStr = toDateStr(viewYear, viewMonth, day);
-            const blocked = isBlockedDate(dateStr, schedules);
+            const allBlocked = isAllBlocked(dateStr, schedules, totalAvailable);
             const isPast = dateStr < todayStr;
             const isBelowMin = minDate ? dateStr < minDate : false;
             const isSelected = dateStr === selectedDate;
-            const disabled = blocked || isPast || isBelowMin;
+            const disabled = allBlocked || isPast || isBelowMin;
             const dayOfWeek = new Date(viewYear, viewMonth, day).getDay();
 
             return (
@@ -131,7 +142,7 @@ function MiniCalendar({
                 className={`h-9 rounded-lg text-[0.8rem] transition-all relative ${
                   isSelected
                     ? "bg-[#2D6A4F] text-white"
-                    : blocked
+                    : allBlocked
                     ? "bg-[#FEE2E2] text-[#EF4444]/60 cursor-not-allowed"
                     : isPast || isBelowMin
                     ? "text-gray-300 cursor-not-allowed"
@@ -142,11 +153,11 @@ function MiniCalendar({
                 style={{ fontWeight: isSelected ? 600 : 400 }}
               >
                 <span className={`${
-                  !isSelected && !blocked && dayOfWeek === 0 ? "text-[#EF4444]" : ""
-                } ${!isSelected && !blocked && dayOfWeek === 6 ? "text-[#3B82F6]" : ""}`}>
+                  !isSelected && !allBlocked && dayOfWeek === 0 ? "text-[#EF4444]" : ""
+                } ${!isSelected && !allBlocked && dayOfWeek === 6 ? "text-[#3B82F6]" : ""}`}>
                   {day}
                 </span>
-                {blocked && !isSelected && (
+                {allBlocked && !isSelected && (
                   <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#EF4444]" />
                 )}
               </button>
@@ -157,7 +168,7 @@ function MiniCalendar({
         {/* 범례 */}
         <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/50 text-[0.7rem] text-muted-foreground">
           <span className="flex items-center gap-1">
-            <div className="w-2.5 h-2.5 rounded bg-[#FEE2E2] border border-[#EF4444]/20" /> 전문가 불가
+            <div className="w-2.5 h-2.5 rounded bg-[#FEE2E2] border border-[#EF4444]/20" /> 신청 불가
           </span>
           <span className="flex items-center gap-1">
             <div className="w-2.5 h-2.5 rounded bg-[#D8F3DC] border border-[#52B788]/30" /> 오늘
@@ -177,32 +188,38 @@ function MiniCalendar({
 export function ApplicationForm() {
   const navigate = useNavigate();
   const [submitted, setSubmitted] = useState(false);
-  const [assignedExpertName, setAssignedExpertName] = useState<string | null>(null);
 
   const [content, setContent] = useState("");
   const [dueStartDate, setDueStartDate] = useState("");
   const [dueEndDate, setDueEndDate] = useState("");
 
-  // 전문가 불가능 일정
+  // 전문가 불가능 일정 + 가용 전문가 수
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+  const [totalAvailable, setTotalAvailable] = useState(0);
   const [loadingSchedules, setLoadingSchedules] = useState(true);
 
-  // 불가 일정 조회 (2달치)
+  // 불가 일정 + 전문가 목록 조회
   useEffect(() => {
-    const fetchSchedules = async () => {
+    const fetchData = async () => {
       try {
         const today = new Date().toISOString().split("T")[0];
-        const response = await axios.get(
-          `http://localhost:8080/api/schedule/unavailable?startDate=${today}`
-        );
-        setSchedules(response.data);
+        const [scheduleRes, expertRes] = await Promise.all([
+          axios.get(`http://localhost:8080/api/schedule/unavailable?startDate=${today}`),
+          axios.get("http://localhost:8080/api/specialist"),
+        ]);
+        setSchedules(scheduleRes.data);
+        // 가용 상태인 전문가만 카운트
+        const availableCount = expertRes.data.filter(
+          (e: { expertState: string }) => e.expertState === "가용"
+        ).length;
+        setTotalAvailable(availableCount);
       } catch (error) {
-        console.error("전문가 일정 조회 실패:", error);
+        console.error("데이터 조회 실패:", error);
       } finally {
         setLoadingSchedules(false);
       }
     };
-    fetchSchedules();
+    fetchData();
   }, []);
 
   const canSubmit = content.trim() !== "" && dueStartDate !== "" && dueEndDate !== "";
@@ -220,22 +237,6 @@ export function ApplicationForm() {
       const data = response.data;
 
       if (data) {
-        // 신청 성공 후 최신 신청 목록 조회해서 배정된 전문가 확인
-        try {
-          const listRes = await axios.get(
-            "http://localhost:8080/api/applications/visit",
-            { headers: { Authorization: `${token}` } }
-          );
-          const list = listRes.data;
-          if (list && list.length > 0) {
-            const latest = list[list.length - 1];
-            if (latest.expertName && latest.expertName !== "배정준비중") {
-              setAssignedExpertName(latest.expertName);
-            }
-          }
-        } catch (e) {
-          // 목록 조회 실패해도 신청은 성공
-        }
         setSubmitted(true);
       } else {
         alert("답사 등록에 실패했습니다.");
@@ -257,18 +258,9 @@ export function ApplicationForm() {
             답사 신청이 완료되었습니다
           </h2>
 
-          {assignedExpertName ? (
-            <div className="flex items-center justify-center gap-2 text-[#2D6A4F] mb-4">
-              <UserCheck className="w-5 h-5" />
-              <p className="text-[0.9375rem]" style={{ fontWeight: 600 }}>
-                담당 전문가: {assignedExpertName}
-              </p>
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-[0.9375rem] mb-4">
-              전문가 배정이 진행 중입니다. 잠시 후 확인해주세요.
-            </p>
-          )}
+          <p className="text-muted-foreground text-[0.9375rem] mb-4">
+            관리자 승인 후 전문가가 자동 배정됩니다.
+          </p>
 
           <div className="bg-[#F8F9FA] rounded-xl p-5 text-left mb-8">
             <h3 className="text-[0.875rem] text-muted-foreground mb-3" style={{ fontWeight: 600 }}>
@@ -287,7 +279,8 @@ export function ApplicationForm() {
                 <span className="text-muted-foreground">답사 종료일</span>
                 <span style={{ fontWeight: 500 }}>{dueEndDate}</span>
               </div>
-              {assignedExpertName && (
+              {/* 배정 전문가는 승인 후 ApplicationStatus에서 확인 */}
+              {false && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">배정 전문가</span>
                   <span className="text-[#2D6A4F]" style={{ fontWeight: 600 }}>{assignedExpertName}</span>
@@ -307,7 +300,6 @@ export function ApplicationForm() {
             <button
               onClick={() => {
                 setSubmitted(false);
-                setAssignedExpertName(null);
                 setContent("");
                 setDueStartDate("");
                 setDueEndDate("");
@@ -396,6 +388,7 @@ export function ApplicationForm() {
                   }
                 }}
                 schedules={schedules}
+                totalAvailable={totalAvailable}
                 label="답사 시작일"
               />
 
@@ -403,6 +396,7 @@ export function ApplicationForm() {
                 selectedDate={dueEndDate}
                 onSelect={setDueEndDate}
                 schedules={schedules}
+                totalAvailable={totalAvailable}
                 label="답사 종료일"
                 minDate={dueStartDate || undefined}
               />
@@ -417,11 +411,10 @@ export function ApplicationForm() {
           <Ban className="w-5 h-5 text-[#EF4444] mt-0.5 shrink-0" />
           <div className="text-[0.8125rem] text-[#991B1B]">
             <p style={{ fontWeight: 600 }} className="mb-1">
-              전문가 불가 일정 {schedules.length}건
+              전문가 불가 일정 안내
             </p>
             <p className="text-[#991B1B]/70">
-              빨간색 날짜는 전문가가 불가능한 일정이 있는 날짜입니다.
-              해당 날짜를 피해 신청해주세요.
+              빨간색 날짜는 가용 전문가가 없어 신청이 불가합니다.
             </p>
           </div>
         </div>
