@@ -26,6 +26,7 @@ export function Login() {
       localStorage.setItem("token", token);
 
       const payload = JSON.parse(atob(token.replace("Bearer ", "").split(".")[1]));
+      console.log(payload);
       localStorage.setItem("isAdmin", payload.is_admin);
       navigate("/dashboard");
     } catch (err) {
