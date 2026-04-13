@@ -195,6 +195,7 @@ const statusMap: Record<string, { label: string; color: string; icon: any }> = {
   useEffect(() => {
     fetchPendingMembers();
     fetchPendingCompanies();
+    fetchCompanyList();
     fetchVisits(); // 페이지 첫 로드 시 답사 내역 불러오기
   }, []);
 
