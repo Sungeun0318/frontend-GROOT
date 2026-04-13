@@ -21,6 +21,7 @@ interface BasicReportDto {
   detailId: number;
   content: string;
   dueStartDate: string;
+  dueEndDate: string;
   times: number;
   companyName: string;
   partyName: string;
@@ -60,8 +61,8 @@ interface TreeMeasurement {
   height: string;
   width: string;
   treeStatus: "excellent" | "good" | "fair" | "poor";
-  picture: string;          // 미리보기 url
-  pictureFile: File | null; // 실제 업로드 파일
+  picture: string;
+  pictureFile: File | null;
   latitude: string;
   longitude: string;
 }
@@ -93,8 +94,6 @@ const speciesOptions = [
 ];
 
 export function ExpertReport() {
-
-
   const { detailId } = useParams<{ detailId: string }>();
 
   const [submitted, setSubmitted] = useState(false);
@@ -106,6 +105,7 @@ export function ExpertReport() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isLinkValid, setIsLinkValid] = useState<boolean | null>(null);
 
   const [measurements, setMeasurements] = useState<TreeMeasurement[]>([
     {
@@ -163,6 +163,19 @@ export function ExpertReport() {
       try {
         setLoading(true);
 
+        const linkRes = await axios.get(
+          `http://localhost:8080/api/expert-reports/link?detailId=${detailId}`
+        );
+
+        if (!linkRes.data) {
+          setIsLinkValid(false);
+          setBasicInfo(null);
+          setCompletedRounds([]);
+          return;
+        }
+
+        setIsLinkValid(true);
+
         const [basicRes, roundRes] = await Promise.all([
           axios.get(`http://localhost:8080/api/expert-reports/basic/${detailId}`),
           axios.get(`http://localhost:8080/api/expert-reports/${detailId}`),
@@ -172,7 +185,8 @@ export function ExpertReport() {
         setCompletedRounds(roundRes.data || []);
       } catch (error) {
         console.error("초기 데이터 조회 실패", error);
-        alert("기본 정보를 불러오지 못했습니다.");
+        setIsLinkValid(false);
+        alert("접근할 수 없는 링크입니다.");
       } finally {
         setLoading(false);
       }
@@ -300,6 +314,11 @@ export function ExpertReport() {
       return;
     }
 
+    if (isLinkValid === false) {
+      alert("만료된 링크입니다.");
+      return;
+    }
+
     if (!sitePictureFile) {
       alert("전경 사진을 업로드해주세요.");
       return;
@@ -349,6 +368,25 @@ export function ExpertReport() {
 
   if (loading) {
     return <div className="max-w-2xl mx-auto py-20 text-center">불러오는 중...</div>;
+  }
+
+  if (isLinkValid === false) {
+    return (
+      <div className="max-w-2xl mx-auto py-20 text-center">
+        <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
+          <Calendar className="w-10 h-10 text-red-600" />
+        </div>
+        <h2 className="text-[1.5rem] text-gray-900 mb-2" style={{ fontWeight: 700 }}>
+          접근할 수 없는 링크입니다
+        </h2>
+        <p className="text-gray-500 mb-2">
+          답사 시작일 전이거나 답사 종료일이 지나서 링크가 만료되었습니다.
+        </p>
+        <p className="text-[0.85rem] text-gray-400">
+          관리자에게 새로운 링크를 요청해주세요.
+        </p>
+      </div>
+    );
   }
 
   if (!basicInfo) {
@@ -452,6 +490,20 @@ export function ExpertReport() {
               </p>
               <p className="text-[0.9rem] text-gray-900" style={{ fontWeight: 600 }}>
                 {basicInfo.dueStartDate}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center shrink-0">
+              <Calendar className="w-4 h-4 text-rose-600" />
+            </div>
+            <div>
+              <p className="text-[0.75rem] text-gray-400" style={{ fontWeight: 600 }}>
+                답사 종료일
+              </p>
+              <p className="text-[0.9rem] text-gray-900" style={{ fontWeight: 600 }}>
+                {basicInfo.dueEndDate}
               </p>
             </div>
           </div>
@@ -677,7 +729,6 @@ export function ExpertReport() {
                   </div>
 
                   <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
-                    {/* 왼쪽: 측정 사진 */}
                     <div>
                       <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
                         측정 사진
@@ -715,7 +766,6 @@ export function ExpertReport() {
                       </label>
                     </div>
 
-                    {/* 오른쪽: 위치 등록 + 요약 정보 */}
                     <div className="flex-1 min-w-[220px] flex flex-col justify-end">
                       <div className="flex justify-end">
                         <button
@@ -778,7 +828,6 @@ export function ExpertReport() {
                       </div>
 
                       <div className="space-y-3">
-                        {/* 1번째 줄 */}
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                           <div>
                             <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
@@ -817,7 +866,6 @@ export function ExpertReport() {
                           </div>
                         </div>
 
-                        {/* 2번째 줄 */}
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                           <div>
                             <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
@@ -836,8 +884,8 @@ export function ExpertReport() {
                               {prev.kind === "broadleaf"
                                 ? "활엽수"
                                 : prev.kind === "conifer"
-                                  ? "침엽수"
-                                  : prev.kind || "-"}
+                                ? "침엽수"
+                                : prev.kind || "-"}
                             </div>
                           </div>
 
@@ -890,11 +938,11 @@ export function ExpertReport() {
                             <span className="text-gray-300">|</span>
 
                             <span
-  className={`px-2 py-0.5 rounded-md text-[0.75rem] ${getHealthDisplay(prev.treeStatus).color}`}
-  style={{ fontWeight: 600 }}
->
-  {getHealthDisplay(prev.treeStatus).emoji} {getHealthDisplay(prev.treeStatus).label}
-</span>
+                              className={`px-2 py-0.5 rounded-md text-[0.75rem] ${getHealthDisplay(prev.treeStatus).color}`}
+                              style={{ fontWeight: 600 }}
+                            >
+                              {getHealthDisplay(prev.treeStatus).emoji} {getHealthDisplay(prev.treeStatus).label}
+                            </span>
                           </div>
                         </div>
                       </div>
