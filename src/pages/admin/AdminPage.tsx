@@ -147,14 +147,15 @@ export function AdminPage() {
   };
 
 interface ApplicationDto {
-  detailId: number; memberId: number; companyName: string; 
+  detailId: number; memberId: number; companyName: string;
+  expertId: number; expertName: string;
   surveyStatus: string; requestStatus: string; dueStartDate: string; dueEndDate: string;
 }
 
 const statusMap: Record<string, { label: string; color: string; icon: any }> = {
   "승인대기": { label: "승인 대기", color: "text-amber-700 bg-amber-50", icon: Clock },
   "반려": { label: "반려됨", color: "text-red-700 bg-red-50", icon: XCircle },
-  "승인완료": { label: "배정 대기", color: "text-blue-700 bg-blue-50", icon: Eye },
+  "승인완료": { label: "승인완료", color: "text-blue-700 bg-blue-50", icon: CheckCircle2 },
   "진행중": { label: "답사 진행중", color: "text-emerald-700 bg-emerald-50", icon: CheckCircle2 },
   "완료": { label: "답사 완료", color: "text-gray-700 bg-gray-100", icon: CheckCircle2 },
 };
@@ -428,13 +429,14 @@ const statusMap: Record<string, { label: string; color: string; icon: any }> = {
                 <tr className="bg-gray-50 text-[0.75rem] text-gray-500 uppercase tracking-wider" style={{ fontWeight: 600 }}>
                   <th className="text-left px-5 py-3">답사번호</th>
                   <th className="text-left px-5 py-3">기업명(번호)</th>
+                  <th className="text-left px-5 py-3">담당 전문가</th>
                   <th className="text-left px-5 py-3">답사 일정</th>
                   <th className="text-left px-5 py-3">현재 상태</th>
                 </tr>
               </thead>
               <tbody>
                 {inProgressVisits.length === 0 ? (
-                  <tr><td colSpan={4} className="px-5 py-8 text-center text-gray-400 text-[0.875rem]">진행 중인 답사가 없습니다.</td></tr>
+                  <tr><td colSpan={5} className="px-5 py-8 text-center text-gray-400 text-[0.875rem]">진행 중인 답사가 없습니다.</td></tr>
                 ) : (
                   inProgressVisits.map((app) => {
                     const st = statusMap[app.surveyStatus] || statusMap["승인완료"];
@@ -443,6 +445,13 @@ const statusMap: Record<string, { label: string; color: string; icon: any }> = {
                       <tr key={app.detailId} className="border-t border-gray-50 hover:bg-gray-50/50">
                         <td className="px-5 py-3.5 text-[0.85rem] text-gray-900" style={{ fontWeight: 600 }}>No. {app.detailId}</td>
                         <td className="px-5 py-3.5 text-[0.85rem] text-gray-700">{app.companyName || `기업코드(${app.memberId})`}</td>
+                        <td className="px-5 py-3.5 text-[0.85rem]">
+                          {app.expertName && app.expertName !== "배정준비중" ? (
+                            <span className="text-emerald-700" style={{ fontWeight: 600 }}>{app.expertName}</span>
+                          ) : (
+                            <span className="text-gray-400">배정준비중</span>
+                          )}
+                        </td>
                         <td className="px-5 py-3.5 text-[0.85rem] text-gray-500">{app.dueStartDate} ~ {app.dueEndDate}</td>
                         <td className="px-5 py-3.5">
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.75rem] ${st.color}`} style={{ fontWeight: 600 }}>
