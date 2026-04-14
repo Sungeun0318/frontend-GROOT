@@ -28,6 +28,7 @@ export function Login() {
       const payload = JSON.parse(atob(token.replace("Bearer ", "").split(".")[1]));
       console.log(payload);
       localStorage.setItem("isAdmin", payload.is_admin);
+      localStorage.setItem("mid", payload.mid);
       navigate("/dashboard");
     } catch (err) {
       alert("로그인에 실패했습니다.");
@@ -37,6 +38,7 @@ export function Login() {
   useEffect(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("isAdmin");
+    localStorage.removeItem("mid");
   }, []);
 
   return (
