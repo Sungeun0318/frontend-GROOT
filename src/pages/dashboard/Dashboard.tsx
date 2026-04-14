@@ -23,8 +23,8 @@ export function Dashboard() {
   const [species, setSpecies] = useState<SpeciesItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // TODO: 인증 컨텍스트에서 memberId 가져오기 (대시보드는 회원/기업 전용)
-  const memberId = 1;
+  // localStorage에서 로그인한 회원의 mid 가져오기
+  const memberId = Number(localStorage.getItem("mid"));
 
   // 대시보드 데이터 로드
   useEffect(() => {
