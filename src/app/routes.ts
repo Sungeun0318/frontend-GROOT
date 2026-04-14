@@ -14,6 +14,8 @@ import { NotFound } from "@/components/common";
 import { MyPage } from "@/pages/mypage";
 
 export const router = createBrowserRouter([
+  // 전문가 보고서: 사이드바 없이 보고서만 표시
+  { path: "/expert-report/:detailId", Component: ExpertReport },
   {
     path: "/",
     Component: Layout,
@@ -30,7 +32,6 @@ export const router = createBrowserRouter([
       { path: "carbon", Component: CarbonVisualization },
       { path: "certification", Component: Certification },
       { path: "esg-report", Component: ESGReport },
-      { path: "expert-report/:detailId", Component: ExpertReport },
       { path: "admin", Component: AdminPage },
       { path: "admin/schedules", Component: ExpertSchedule },
       { path: "brand", Component: LogoShowcase },

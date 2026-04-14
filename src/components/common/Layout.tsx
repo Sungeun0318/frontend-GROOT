@@ -29,7 +29,6 @@ function getNavItems(isAdmin: boolean) {
     { to: "/certification", label: "인증마크", icon: Award },
     { to: "/esg-report", label: "ESG 보고서", icon: FileText },
     ...(isAdmin ? [
-      { to: "/expert-report", label: "전문가 보고서", icon: ClipboardCheck },
       { to: "/admin", label: "관리자", icon: ShieldCheck },
       { to: "/admin/schedules", label: "전문가 일정 관리", icon: Calendar },
     ] : [
@@ -88,6 +87,7 @@ export function Layout() {
               <NavLink
                 key={item.to}
                 to={item.to}
+                end
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive

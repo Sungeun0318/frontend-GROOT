@@ -195,6 +195,7 @@ const statusMap: Record<string, { label: string; color: string; icon: any }> = {
   useEffect(() => {
     fetchPendingMembers();
     fetchPendingCompanies();
+    fetchCompanyList();
     fetchVisits(); // 페이지 첫 로드 시 답사 내역 불러오기
   }, []);
 
@@ -666,9 +667,7 @@ const statusMap: Record<string, { label: string; color: string; icon: any }> = {
                 >
                   <option value="">상태 선택</option>
                   <option value="가용">가용</option>
-                  <option value="휴직">휴직</option>
-                  <option value="파견">파견</option>
-                  <option value="퇴직">퇴직</option>
+                  <option value="비가용">비가용</option>
                 </select>
               </div>
             </div>

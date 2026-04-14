@@ -34,18 +34,28 @@ interface ApplicationDto {
   surveyStatus: string;
 }
 
+interface TempSaveDto {
+  detailId: number;
+  opinion: string;
+  sitePicture: string | null;
+  tempData: string | null;
+}
+
+type TreeStatus = "양호" | "보통" | "불량";
+type TreeKind = "broadleaf" | "conifer" | "";
+
 interface ExpertReportDto {
   treeId?: number;
   detailId: number;
-  treeType: string;
-  dbh: number;
-  treeStatus: "excellent" | "good" | "fair" | "poor";
-  picture: string;
-  height: number;
-  width: number;
-  kind: "broadleaf" | "conifer";
-  latitude: number;
-  longitude: number;
+  treeType: string | null;
+  dbh: number | null;
+  treeStatus: TreeStatus;
+  picture: string | null;
+  height: number | null;
+  width: number | null;
+  kind: TreeKind;
+  latitude: number | null;
+  longitude: number | null;
   opinion: string;
   memberId?: number;
   sitePicture?: string;
@@ -55,32 +65,29 @@ interface ExpertReportDto {
 
 interface TreeMeasurement {
   id: string;
-  treeType: string;
-  kind: "broadleaf" | "conifer";
-  dbh: string;
-  height: string;
-  width: string;
-  treeStatus: "excellent" | "good" | "fair" | "poor";
-  picture: string;
+  treeType: string | null;
+  kind: TreeKind;
+  dbh: string | null;
+  height: string | null;
+  width: string | null;
+  treeStatus: TreeStatus;
+  picture: string | null;
   pictureFile: File | null;
-  latitude: string;
-  longitude: string;
+  latitude: string | null;
+  longitude: string | null;
 }
 
-const healthLabels: Record<string, { label: string; color: string; emoji: string }> = {
-  excellent: { label: "매우 양호", color: "text-emerald-700 bg-emerald-50", emoji: "🟢" },
-  good: { label: "양호", color: "text-blue-700 bg-blue-50", emoji: "🔵" },
-  fair: { label: "보통", color: "text-amber-700 bg-amber-50", emoji: "🟡" },
-  poor: { label: "불량", color: "text-red-700 bg-red-50", emoji: "🔴" },
-};
-
-const getHealthDisplay = (status: string) => {
-  if (status === "excellent" || status === "매우 양호") return healthLabels.excellent;
-  if (status === "good" || status === "양호") return healthLabels.good;
-  if (status === "fair" || status === "보통") return healthLabels.fair;
-  if (status === "poor" || status === "불량") return healthLabels.poor;
-  return { label: status, color: "bg-gray-100 text-gray-600", emoji: "" };
-};
+interface TempMeasurement {
+  treeType: string | null;
+  kind: TreeKind;
+  dbh: string | null;
+  height: string | null;
+  width: string | null;
+  treeStatus: TreeStatus;
+  picture: string | null;
+  latitude: string | null;
+  longitude: string | null;
+}
 
 const speciesOptions = [
   "소나무",
@@ -92,6 +99,37 @@ const speciesOptions = [
   "메타세쿼이아",
   "자작나무",
 ];
+
+const createEmptyMeasurement = (): TreeMeasurement => ({
+  id: String(Date.now() + Math.random()),
+  treeType: null,
+  kind: "",
+  dbh: null,
+  height: null,
+  width: null,
+  treeStatus: "양호",
+  picture: null,
+  pictureFile: null,
+  latitude: null,
+  longitude: null,
+});
+
+const isBase64Image = (value: string | null) =>
+  !!value && value.startsWith("data:image/");
+
+const fileToDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+const dataUrlToFile = async (dataUrl: string, fileName: string): Promise<File> => {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], fileName, { type: blob.type || "image/jpeg" });
+};
 
 export function ExpertReport() {
   const { detailId } = useParams<{ detailId: string }>();
@@ -105,54 +143,14 @@ export function ExpertReport() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [tempSaving, setTempSaving] = useState(false);
   const [isLinkValid, setIsLinkValid] = useState<boolean | null>(null);
 
   const [measurements, setMeasurements] = useState<TreeMeasurement[]>([
-    {
-      id: "1",
-      treeType: "편백나무",
-      kind: "conifer",
-      dbh: "18.5",
-      height: "6.2",
-      width: "2.8",
-      treeStatus: "excellent",
-      picture: "",
-      pictureFile: null,
-      latitude: "",
-      longitude: "",
-    },
-    {
-      id: "2",
-      treeType: "편백나무",
-      kind: "conifer",
-      dbh: "16.2",
-      height: "5.8",
-      width: "2.4",
-      treeStatus: "good",
-      picture: "",
-      pictureFile: null,
-      latitude: "",
-      longitude: "",
-    },
-    {
-      id: "3",
-      treeType: "편백나무",
-      kind: "conifer",
-      dbh: "12.0",
-      height: "4.5",
-      width: "1.9",
-      treeStatus: "fair",
-      picture: "",
-      pictureFile: null,
-      latitude: "",
-      longitude: "",
-    },
+    createEmptyMeasurement(),
   ]);
 
-  const [opinion, setOpinion] = useState(
-    "전반적으로 식재 상태가 양호하며, 활착률은 약 95%로 추정됩니다. 일부 배수 불량 구간(남동쪽 저지대)에서 하엽 황변이 관찰되어 배수로 정비가 필요합니다. 차기 답사 시 생장량 비교 측정 권장합니다."
-  );
-
+  const [opinion, setOpinion] = useState("");
   const [sitePicture, setSitePicture] = useState<string | null>(null);
   const [sitePictureFile, setSitePictureFile] = useState<File | null>(null);
 
@@ -176,13 +174,52 @@ export function ExpertReport() {
 
         setIsLinkValid(true);
 
-        const [basicRes, roundRes] = await Promise.all([
-          axios.get(`/api/expert-reports/basic/${detailId}`),
-          axios.get(`/api/expert-reports/${detailId}`),
+        const [basicRes, roundRes, tempRes] = await Promise.all([
+          axios.get(`http://localhost:8080/api/expert-reports/basic/${detailId}`),
+          axios.get(`http://localhost:8080/api/expert-reports/${detailId}`),
+          axios.get(`http://localhost:8080/api/temp-save/${detailId}`).catch(() => ({ data: null })),
         ]);
 
         setBasicInfo(basicRes.data);
         setCompletedRounds(roundRes.data || []);
+
+        const tempData: TempSaveDto | null = tempRes.data;
+        if (tempData) {
+          if (tempData.opinion) {
+            setOpinion(tempData.opinion);
+          }
+
+          if (tempData.sitePicture) {
+            setSitePicture(tempData.sitePicture);
+            setSitePictureFile(null);
+          }
+
+          if (tempData.tempData) {
+            try {
+              const parsed: TempMeasurement[] = JSON.parse(tempData.tempData);
+
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const restoredMeasurements: TreeMeasurement[] = parsed.map((item, index) => ({
+                  id: String(Date.now() + index + Math.random()),
+                  treeType: item.treeType ?? null,
+                  kind: item.kind ?? "",
+                  dbh: item.dbh ?? null,
+                  height: item.height ?? null,
+                  width: item.width ?? null,
+                  treeStatus: item.treeStatus ?? "양호",
+                  picture: item.picture ?? null,
+                  pictureFile: null,
+                  latitude: item.latitude ?? null,
+                  longitude: item.longitude ?? null,
+                }));
+
+                setMeasurements(restoredMeasurements);
+              }
+            } catch (error) {
+              console.error("임시 저장 데이터 파싱 실패", error);
+            }
+          }
+        }
       } catch (error) {
         console.error("초기 데이터 조회 실패", error);
         setIsLinkValid(false);
@@ -224,22 +261,7 @@ export function ExpertReport() {
   }, [selectedRound, completedRounds]);
 
   const addMeasurement = () => {
-    setMeasurements((prev) => [
-      ...prev,
-      {
-        id: String(Date.now()),
-        treeType: "편백나무",
-        kind: "conifer",
-        dbh: "",
-        height: "",
-        width: "",
-        treeStatus: "good",
-        picture: "",
-        pictureFile: null,
-        latitude: "",
-        longitude: "",
-      },
-    ]);
+    setMeasurements((prev) => [...prev, createEmptyMeasurement()]);
   };
 
   const removeMeasurement = (id: string) => {
@@ -285,28 +307,83 @@ export function ExpertReport() {
     );
   };
 
-  const estimateCarbonPerTree = (dbhCm: number) => {
-    const biomassKg = 0.0396 * Math.pow(dbhCm, 2.3715);
-    const carbonKg = biomassKg * 0.5;
-    const co2Kg = carbonKg * (44 / 12);
-    return co2Kg;
-  };
-
-  const totalCO2 = measurements.reduce((sum, m) => {
-    const dbh = parseFloat(m.dbh);
-    if (isNaN(dbh) || dbh <= 0) return sum;
-    return sum + estimateCarbonPerTree(dbh);
-  }, 0);
-
-  const avgDbh =
-    measurements.reduce((s, m) => s + (parseFloat(m.dbh) || 0), 0) /
-    (measurements.length || 1);
-
   const comparisonRoundOptions = basicInfo
     ? Array.from({ length: basicInfo.times }, (_, i) => i)
     : [];
 
   const selectedPreviousMeasurements = previousRoundData;
+
+  const handleTempSave = async () => {
+    if (!detailId) {
+      alert("detailId가 없습니다.");
+      return;
+    }
+
+    if (isLinkValid === false) {
+      alert("만료된 링크입니다.");
+      return;
+    }
+
+    try {
+      setTempSaving(true);
+
+      const tempMeasurements = await Promise.all(
+        measurements.map(async (m) => {
+          let pictureValue = m.picture;
+
+          if (m.pictureFile) {
+            pictureValue = await fileToDataUrl(m.pictureFile);
+          }
+
+          return {
+            treeType: m.treeType,
+            kind: m.kind,
+            dbh: m.dbh,
+            height: m.height,
+            width: m.width,
+            treeStatus: m.treeStatus,
+            picture: pictureValue,
+            latitude: m.latitude,
+            longitude: m.longitude,
+          };
+        })
+      );
+
+      let sitePictureValue = sitePicture;
+      if (sitePictureFile) {
+        sitePictureValue = await fileToDataUrl(sitePictureFile);
+      }
+
+      const payload: TempSaveDto = {
+        detailId: Number(detailId),
+        opinion,
+        sitePicture: sitePictureValue,
+        tempData: JSON.stringify(tempMeasurements),
+      };
+
+      await axios.post("http://localhost:8080/api/temp-save", payload);
+
+      if (sitePictureFile && sitePictureValue) {
+        setSitePicture(sitePictureValue);
+        setSitePictureFile(null);
+      }
+
+      setMeasurements((prev) =>
+        prev.map((m, index) => ({
+          ...m,
+          picture: tempMeasurements[index]?.picture ?? m.picture,
+          pictureFile: null,
+        }))
+      );
+
+      alert("임시 저장되었습니다.");
+    } catch (error) {
+      console.error("임시 저장 실패", error);
+      alert("임시 저장에 실패했습니다.");
+    } finally {
+      setTempSaving(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!detailId) {
@@ -319,7 +396,7 @@ export function ExpertReport() {
       return;
     }
 
-    if (!sitePictureFile) {
+    if (!sitePicture && !sitePictureFile) {
       alert("전경 사진을 업로드해주세요.");
       return;
     }
@@ -330,32 +407,55 @@ export function ExpertReport() {
       const data: ExpertReportDto[] = measurements.map((m) => ({
         detailId: Number(detailId),
         treeType: m.treeType,
-        dbh: Number(m.dbh) || 0,
+        dbh: m.dbh ? Number(m.dbh) : null,
         treeStatus: m.treeStatus,
-        picture: "",
-        height: Number(m.height) || 0,
-        width: Number(m.width) || 0,
+        picture: null,
+        height: m.height ? Number(m.height) : null,
+        width: m.width ? Number(m.width) : null,
         kind: m.kind,
-        latitude: Number(m.latitude) || 0,
-        longitude: Number(m.longitude) || 0,
+        latitude: m.latitude ? Number(m.latitude) : null,
+        longitude: m.longitude ? Number(m.longitude) : null,
         opinion,
       }));
 
       const formData = new FormData();
       formData.append("data", JSON.stringify(data));
-      formData.append("site", sitePictureFile);
 
-      measurements.forEach((m) => {
+      if (sitePictureFile) {
+        formData.append("site", sitePictureFile);
+      } else if (sitePicture && isBase64Image(sitePicture)) {
+        const siteFileFromBase64 = await dataUrlToFile(
+          sitePicture,
+          `site-${detailId}.png`
+        );
+        formData.append("site", siteFileFromBase64);
+      }
+
+      for (let i = 0; i < measurements.length; i++) {
+        const m = measurements[i];
+
         if (m.pictureFile) {
           formData.append("files", m.pictureFile);
+        } else if (m.picture && isBase64Image(m.picture)) {
+          const treeFileFromBase64 = await dataUrlToFile(
+            m.picture,
+            `tree-${detailId}-${i + 1}.png`
+          );
+          formData.append("files", treeFileFromBase64);
         }
-      });
+      }
 
-      await axios.post("/api/expert-reports", formData, {
+      await axios.post("http://localhost:8080/api/expert-reports", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
+
+      try {
+        await axios.delete(`http://localhost:8080/api/temp-save/${detailId}`);
+      } catch (error) {
+        console.error("임시 저장 삭제 실패", error);
+      }
 
       setSubmitted(true);
     } catch (error) {
@@ -424,7 +524,10 @@ export function ExpertReport() {
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-10">
       <div>
-        <div className="flex items-center gap-2 text-[0.8rem] text-[#2D6A4F] mb-2" style={{ fontWeight: 600 }}>
+        <div
+          className="flex items-center gap-2 text-[0.8rem] text-[#2D6A4F] mb-2"
+          style={{ fontWeight: 600 }}
+        >
           <FileText className="w-4 h-4" />
           현장 답사 보고서
         </div>
@@ -597,57 +700,96 @@ export function ExpertReport() {
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                       <div>
-                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                        <label
+                          className="text-[0.7rem] text-gray-400 mb-1 block"
+                          style={{ fontWeight: 600 }}
+                        >
                           수종
                         </label>
                         <select
-                          value={m.treeType}
-                          onChange={(e) => updateMeasurement(m.id, "treeType", e.target.value)}
+                          value={m.treeType ?? ""}
+                          onChange={(e) =>
+                            updateMeasurement(
+                              m.id,
+                              "treeType",
+                              e.target.value === "" ? null : e.target.value
+                            )
+                          }
                           className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F] bg-white"
                         >
+                          <option value="">선택하세요</option>
                           {speciesOptions.map((s) => (
-                            <option key={s}>{s}</option>
+                            <option key={s} value={s}>
+                              {s}
+                            </option>
                           ))}
                         </select>
                       </div>
 
                       <div>
-                        <label className="text-[0.7rem] text-gray-400 mb-1 flex items-center gap-1" style={{ fontWeight: 600 }}>
+                        <label
+                          className="text-[0.7rem] text-gray-400 mb-1 flex items-center gap-1"
+                          style={{ fontWeight: 600 }}
+                        >
                           <Ruler className="w-3 h-3" /> 흉고직경 (cm)
                         </label>
                         <input
                           type="number"
                           step="0.1"
-                          value={m.dbh}
-                          onChange={(e) => updateMeasurement(m.id, "dbh", e.target.value)}
+                          value={m.dbh ?? ""}
+                          onChange={(e) =>
+                            updateMeasurement(
+                              m.id,
+                              "dbh",
+                              e.target.value === "" ? null : e.target.value
+                            )
+                          }
                           placeholder="0.0"
                           className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
                         />
                       </div>
 
                       <div>
-                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                        <label
+                          className="text-[0.7rem] text-gray-400 mb-1 block"
+                          style={{ fontWeight: 600 }}
+                        >
                           수고 (m)
                         </label>
                         <input
                           type="number"
                           step="0.1"
-                          value={m.height}
-                          onChange={(e) => updateMeasurement(m.id, "height", e.target.value)}
+                          value={m.height ?? ""}
+                          onChange={(e) =>
+                            updateMeasurement(
+                              m.id,
+                              "height",
+                              e.target.value === "" ? null : e.target.value
+                            )
+                          }
                           placeholder="0.0"
                           className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
                         />
                       </div>
 
                       <div>
-                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                        <label
+                          className="text-[0.7rem] text-gray-400 mb-1 block"
+                          style={{ fontWeight: 600 }}
+                        >
                           수관폭 (m)
                         </label>
                         <input
                           type="number"
                           step="0.1"
-                          value={m.width}
-                          onChange={(e) => updateMeasurement(m.id, "width", e.target.value)}
+                          value={m.width ?? ""}
+                          onChange={(e) =>
+                            updateMeasurement(
+                              m.id,
+                              "width",
+                              e.target.value === "" ? null : e.target.value
+                            )
+                          }
                           placeholder="0.0"
                           className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
                         />
@@ -656,8 +798,11 @@ export function ExpertReport() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                       <div>
-                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
-                          건강상태
+                        <label
+                          className="text-[0.7rem] text-gray-400 mb-1 block"
+                          style={{ fontWeight: 600 }}
+                        >
+                          나무상태
                         </label>
                         <select
                           value={m.treeStatus}
@@ -665,21 +810,22 @@ export function ExpertReport() {
                             updateMeasurement(
                               m.id,
                               "treeStatus",
-                              e.target.value as TreeMeasurement["treeStatus"]
+                              e.target.value as TreeStatus
                             )
                           }
                           className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F] bg-white"
                         >
-                          {Object.entries(healthLabels).map(([key, { label }]) => (
-                            <option key={key} value={key}>
-                              {label}
-                            </option>
-                          ))}
+                          <option value="양호">양호</option>
+                          <option value="보통">보통</option>
+                          <option value="불량">불량</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                        <label
+                          className="text-[0.7rem] text-gray-400 mb-1 block"
+                          style={{ fontWeight: 600 }}
+                        >
                           수종 구분
                         </label>
                         <select
@@ -688,39 +834,58 @@ export function ExpertReport() {
                             updateMeasurement(
                               m.id,
                               "kind",
-                              e.target.value as TreeMeasurement["kind"]
+                              e.target.value as TreeKind
                             )
                           }
                           className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F] bg-white"
                         >
+                          <option value="">선택하세요</option>
                           <option value="broadleaf">활엽수</option>
                           <option value="conifer">침엽수</option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                        <label
+                          className="text-[0.7rem] text-gray-400 mb-1 block"
+                          style={{ fontWeight: 600 }}
+                        >
                           위도
                         </label>
                         <input
                           type="number"
                           step="0.000001"
-                          value={m.latitude}
-                          onChange={(e) => updateMeasurement(m.id, "latitude", e.target.value)}
+                          value={m.latitude ?? ""}
+                          onChange={(e) =>
+                            updateMeasurement(
+                              m.id,
+                              "latitude",
+                              e.target.value === "" ? null : e.target.value
+                            )
+                          }
                           placeholder="예: 35.824223"
                           className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
                         />
                       </div>
 
                       <div>
-                        <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                        <label
+                          className="text-[0.7rem] text-gray-400 mb-1 block"
+                          style={{ fontWeight: 600 }}
+                        >
                           경도
                         </label>
                         <input
                           type="number"
                           step="0.000001"
-                          value={m.longitude}
-                          onChange={(e) => updateMeasurement(m.id, "longitude", e.target.value)}
+                          value={m.longitude ?? ""}
+                          onChange={(e) =>
+                            updateMeasurement(
+                              m.id,
+                              "longitude",
+                              e.target.value === "" ? null : e.target.value
+                            )
+                          }
                           placeholder="예: 127.148000"
                           className="w-full px-2.5 py-2 rounded-lg border border-gray-200 text-[0.85rem] focus:outline-none focus:ring-2 focus:ring-[#2D6A4F]/20 focus:border-[#2D6A4F]"
                         />
@@ -730,7 +895,10 @@ export function ExpertReport() {
 
                   <div className="mt-3 flex items-end justify-between gap-4 flex-wrap">
                     <div>
-                      <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                      <label
+                        className="text-[0.7rem] text-gray-400 mb-1 block"
+                        style={{ fontWeight: 600 }}
+                      >
                         측정 사진
                       </label>
 
@@ -754,7 +922,7 @@ export function ExpertReport() {
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          onChange={(e) => {
+                          onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
 
@@ -776,30 +944,6 @@ export function ExpertReport() {
                         >
                           내 위치 등록
                         </button>
-                      </div>
-
-                      <div className="mt-3 flex items-center gap-2 text-[0.8rem] flex-wrap justify-end">
-                        <span className="text-gray-400">추정 CO₂ 흡수:</span>
-                        <span
-                          className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md"
-                          style={{ fontWeight: 600 }}
-                        >
-                          {(() => {
-                            const dbh = parseFloat(m.dbh);
-                            return !isNaN(dbh) && dbh > 0
-                              ? `${estimateCarbonPerTree(dbh).toFixed(1)}kg`
-                              : "0.0kg";
-                          })()}
-                        </span>
-
-                        <span className="text-gray-300">|</span>
-
-                        <span
-                          className={`px-2 py-0.5 rounded-md text-[0.75rem] ${healthLabels[m.treeStatus].color}`}
-                          style={{ fontWeight: 600 }}
-                        >
-                          {healthLabels[m.treeStatus].emoji} {healthLabels[m.treeStatus].label}
-                        </span>
                       </div>
                     </div>
                   </div>
@@ -830,80 +974,104 @@ export function ExpertReport() {
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                           <div>
-                            <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            <label
+                              className="text-[0.7rem] text-gray-400 mb-1 block"
+                              style={{ fontWeight: 600 }}
+                            >
                               수종
                             </label>
                             <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
-                              {prev.treeType}
+                              {prev.treeType ?? "-"}
                             </div>
                           </div>
 
                           <div>
-                            <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            <label
+                              className="text-[0.7rem] text-gray-400 mb-1 block"
+                              style={{ fontWeight: 600 }}
+                            >
                               흉고직경 (cm)
                             </label>
                             <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
-                              {prev.dbh}
+                              {prev.dbh ?? "-"}
                             </div>
                           </div>
 
                           <div>
-                            <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            <label
+                              className="text-[0.7rem] text-gray-400 mb-1 block"
+                              style={{ fontWeight: 600 }}
+                            >
                               수고 (m)
                             </label>
                             <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
-                              {prev.height}
+                              {prev.height ?? "-"}
                             </div>
                           </div>
 
                           <div>
-                            <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            <label
+                              className="text-[0.7rem] text-gray-400 mb-1 block"
+                              style={{ fontWeight: 600 }}
+                            >
                               수관폭 (m)
                             </label>
                             <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
-                              {prev.width}
+                              {prev.width ?? "-"}
                             </div>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                           <div>
-                            <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
-                              건강상태
+                            <label
+                              className="text-[0.7rem] text-gray-400 mb-1 block"
+                              style={{ fontWeight: 600 }}
+                            >
+                              나무상태
                             </label>
                             <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
-                              {healthLabels[prev.treeStatus]?.label ?? prev.treeStatus}
+                              {prev.treeStatus ?? "-"}
                             </div>
                           </div>
 
                           <div>
-                            <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            <label
+                              className="text-[0.7rem] text-gray-400 mb-1 block"
+                              style={{ fontWeight: 600 }}
+                            >
                               수종 구분
                             </label>
                             <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
                               {prev.kind === "broadleaf"
                                 ? "활엽수"
                                 : prev.kind === "conifer"
-                                ? "침엽수"
-                                : prev.kind || "-"}
+                                  ? "침엽수"
+                                  : "-"}
                             </div>
                           </div>
 
                           <div>
-                            <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            <label
+                              className="text-[0.7rem] text-gray-400 mb-1 block"
+                              style={{ fontWeight: 600 }}
+                            >
                               위도
                             </label>
                             <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
-                              {prev.latitude || "-"}
+                              {prev.latitude ?? "-"}
                             </div>
                           </div>
 
                           <div>
-                            <label className="text-[0.7rem] text-gray-400 mb-1 block" style={{ fontWeight: 600 }}>
+                            <label
+                              className="text-[0.7rem] text-gray-400 mb-1 block"
+                              style={{ fontWeight: 600 }}
+                            >
                               경도
                             </label>
                             <div className="w-full px-2.5 py-2 rounded-lg border border-gray-200 bg-gray-50 text-[0.85rem] text-gray-800">
-                              {prev.longitude || "-"}
+                              {prev.longitude ?? "-"}
                             </div>
                           </div>
                         </div>
@@ -915,34 +1083,13 @@ export function ExpertReport() {
                           <div className="aspect-[4/3] w-40 bg-gray-100 rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden">
                             {prev.picture ? (
                               <img
-                                src={`http://localhost:8080/uploads/${prev.picture}`}
+                                src={prev.picture}
                                 alt={`이전 ${selectedRound}차 수목 ${idx + 1} 사진`}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
                               <span className="text-[0.75rem] text-gray-400">사진 없음</span>
                             )}
-                          </div>
-                        </div>
-
-                        <div className="flex-1 min-w-[220px] flex flex-col justify-end">
-                          <div className="mt-3 flex items-center gap-2 text-[0.8rem] flex-wrap justify-end">
-                            <span className="text-gray-400">이전 추정 CO₂ 흡수:</span>
-                            <span
-                              className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md"
-                              style={{ fontWeight: 600 }}
-                            >
-                              {prev.dbh > 0 ? `${estimateCarbonPerTree(prev.dbh).toFixed(1)}kg` : "0.0kg"}
-                            </span>
-
-                            <span className="text-gray-300">|</span>
-
-                            <span
-                              className={`px-2 py-0.5 rounded-md text-[0.75rem] ${getHealthDisplay(prev.treeStatus).color}`}
-                              style={{ fontWeight: 600 }}
-                            >
-                              {getHealthDisplay(prev.treeStatus).emoji} {getHealthDisplay(prev.treeStatus).label}
-                            </span>
                           </div>
                         </div>
                       </div>
@@ -959,7 +1106,7 @@ export function ExpertReport() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center">
           <p className="text-[0.8rem] text-gray-400 mb-1">측정 수목</p>
           <p className="text-[1.75rem] text-gray-900" style={{ fontWeight: 700 }}>
@@ -968,26 +1115,11 @@ export function ExpertReport() {
           <p className="text-[0.75rem] text-gray-400">그루</p>
         </div>
         <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center">
-          <p className="text-[0.8rem] text-gray-400 mb-1">평균 흉고직경</p>
-          <p className="text-[1.75rem] text-[#2D6A4F]" style={{ fontWeight: 700 }}>
-            {avgDbh.toFixed(1)}
-          </p>
-          <p className="text-[0.75rem] text-gray-400">cm</p>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center">
-          <p className="text-[0.8rem] text-gray-400 mb-1">추정 CO₂ 흡수</p>
-          <p className="text-[1.75rem] text-emerald-700" style={{ fontWeight: 700 }}>
-            {totalCO2.toFixed(1)}
-          </p>
-          <p className="text-[0.75rem] text-gray-400">kg (측정분)</p>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center">
           <p className="text-[0.8rem] text-gray-400 mb-1">건강상태</p>
           <p className="text-[1.75rem] text-blue-700" style={{ fontWeight: 700 }}>
-            {measurements.filter((m) => m.treeStatus === "excellent" || m.treeStatus === "good").length}/
-            {measurements.length}
+            {measurements.filter((m) => m.treeStatus === "양호").length}/{measurements.length}
           </p>
-          <p className="text-[0.75rem] text-gray-400">양호 이상</p>
+          <p className="text-[0.75rem] text-gray-400">양호</p>
         </div>
       </div>
 
@@ -999,11 +1131,7 @@ export function ExpertReport() {
         <label className="block cursor-pointer w-60">
           <div className="aspect-[4/3] bg-gray-100 rounded-xl flex flex-col items-center justify-center border border-gray-200 overflow-hidden">
             {sitePicture ? (
-              <img
-                src={sitePicture}
-                alt="전경 사진"
-                className="w-full h-full object-cover"
-              />
+              <img src={sitePicture} alt="전경 사진" className="w-full h-full object-cover" />
             ) : (
               <>
                 <Camera className="w-6 h-6 text-gray-300 mb-1" />
@@ -1055,16 +1183,18 @@ export function ExpertReport() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <button
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors text-[0.95rem]"
+          onClick={handleTempSave}
+          disabled={tempSaving || saving}
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors text-[0.95rem] disabled:opacity-50"
           style={{ fontWeight: 600 }}
         >
           <Save className="w-4.5 h-4.5" />
-          임시 저장
+          {tempSaving ? "임시 저장 중..." : "임시 저장"}
         </button>
 
         <button
           onClick={handleSubmit}
-          disabled={saving}
+          disabled={saving || tempSaving}
           className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#2D6A4F] text-white hover:bg-[#245a42] transition-colors text-[0.95rem] shadow-lg shadow-[#2D6A4F]/20 disabled:opacity-50"
           style={{ fontWeight: 600 }}
         >

@@ -6,15 +6,12 @@ import {
   BarChart3,
   ArrowRight,
   Leaf,
-  Globe,
   ChevronRight,
-  Shield,
   FileText,
   CheckCircle2,
   Sparkles,
   TrendingUp,
   Building2,
-  Star,
   ArrowUpRight,
   Play,
   Zap,
@@ -100,86 +97,47 @@ function FloatingCard({
   );
 }
 
-const testimonials = [
-  {
-    name: "김태호",
-    role: "ESG 경영팀장",
-    company: "한국에너지공사",
-    content:
-      "GROOT 도입 후 탄소배출 관리가 체계적으로 변했습니다. 특히 실시간 탄소흡수량 모니터링과 자동 보고서 생성이 업무 효율을 크게 높였습니다.",
-    rating: 5,
-    avatar: "KT",
-  },
-  {
-    name: "박서연",
-    role: "지속가능경영 이사",
-    company: "그린빌딩(주)",
-    content:
-      "인증마크 제도가 투자자 IR에 매우 효과적이었습니다. 데이터 기반의 투명한 탄소 관리로 ESG 등급이 2단계 상승했습니다.",
-    rating: 5,
-    avatar: "PS",
-  },
-  {
-    name: "이준혁",
-    role: "환경안전팀",
-    company: "동아제약",
-    content:
-      "수목 추천 AI가 정말 정확합니다. 지역 기후와 토양에 최적화된 수종을 추천받아 활착률 95%를 달성했습니다.",
-    rating: 5,
-    avatar: "LJ",
-  },
-];
-
 const features = [
   {
     icon: Sparkles,
-    title: "AI 수종 추천",
-    desc: "지역 기후·토양 데이터를 분석하여 최적의 수종 3가지를 추천합니다.",
+    title: "맞춤 수종 추천",
+    desc: "지역 기후·토양 조건을 분석하여 최적의 수종 3가지를 알고리즘으로 추천합니다.",
     gradient: "from-emerald-500 to-teal-600",
   },
   {
     icon: BarChart3,
-    title: "실시간 탄소 모니터링",
-    desc: "등록된 수목의 탄소흡수량을 실시간으로 추적하고 시각화합니다.",
+    title: "탄소흡수량 예측",
+    desc: "등록된 수목의 탄소흡수량을 연도별로 예측하고 시각화합니다.",
     gradient: "from-teal-500 to-cyan-600",
   },
   {
-    icon: Shield,
-    title: "블록체인 인증",
-    desc: "탄소흡수 데이터를 블록체인에 기록하여 위변조를 방지합니다.",
+    icon: Award,
+    title: "탄소 인증마크",
+    desc: "탄소흡수량 기반 4단계 인증등급을 산정하고 공식 인증마크를 발급합니다.",
     gradient: "from-cyan-500 to-blue-600",
   },
   {
     icon: FileText,
     title: "자동 ESG 보고서",
-    desc: "GRI·TCFD 기준에 맞는 ESG 보고서를 자동으로 생성합니다.",
+    desc: "탄소흡수량 데이터를 기반으로 ESG 보고서를 자동 생성합니다.",
     gradient: "from-blue-500 to-indigo-600",
-  },
-  {
-    icon: Globe,
-    title: "글로벌 탄소 크레딧",
-    desc: "국제 탄소 크레딧 시장과 연동하여 크레딧 거래를 지원합니다.",
-    gradient: "from-indigo-500 to-purple-600",
   },
   {
     icon: Users,
     title: "전문가 현장 답사",
     desc: "검증된 전문가가 직접 현장을 방문하여 수목 상태를 점검합니다.",
+    gradient: "from-indigo-500 to-purple-600",
+  },
+  {
+    icon: TrendingUp,
+    title: "기업 대시보드",
+    desc: "수목 현황, 탄소흡수량, 인증등급 등 핵심 지표를 한눈에 파악합니다.",
     gradient: "from-purple-500 to-pink-600",
   },
 ];
 
 export function Landing() {
   const navigate = useNavigate();
-  const [activeTestimonial, setActiveTestimonial] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Header */}
@@ -200,12 +158,6 @@ export function Landing() {
               className="hover:text-[#2D6A4F] transition-colors"
             >
               기능
-            </a>
-            <a
-              href="#reviews"
-              className="hover:text-[#2D6A4F] transition-colors"
-            >
-              후기
             </a>
             <a
               href="#map"
@@ -324,30 +276,30 @@ export function Landing() {
                 {[
                   {
                     icon: TreePine,
-                    value: "34,520",
+                    value: "58",
                     label: "등록 수목",
                     unit: "그루",
                     color: "#52B788",
                   },
                   {
                     icon: TrendingUp,
-                    value: "182.4",
+                    value: "51,975",
                     label: "탄소흡수량",
-                    unit: "톤 CO₂",
+                    unit: "kg CO₂",
                     color: "#40C9A2",
                   },
                   {
                     icon: Building2,
-                    value: "248",
+                    value: "17",
                     label: "파트너 기업",
                     unit: "개사",
                     color: "#3BB68E",
                   },
                   {
                     icon: Award,
-                    value: "96.8",
-                    label: "고객 만족도",
-                    unit: "%",
+                    value: "16",
+                    label: "인증마크 발급",
+                    unit: "건",
                     color: "#2D9B73",
                   },
                 ].map((stat, i) => (
@@ -569,10 +521,10 @@ export function Landing() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { label: "파트너 기업", value: 248, suffix: "+", icon: Building2, desc: "전국 주요 기업 참여" },
-              { label: "등록 수목", value: 34520, suffix: "", icon: TreePine, desc: "전국 산림에 식재 완료" },
-              { label: "탄소 흡수량", value: 182, suffix: "톤", icon: TrendingUp, desc: "연간 CO₂ 흡수량" },
-              { label: "고객 만족도", value: 96, suffix: "%", icon: Star, desc: "재이용 의향 고객 비율" },
+              { label: "파트너 기업", value: 17, suffix: "개사", icon: Building2, desc: "전국 주요 기업 참여" },
+              { label: "등록 수목", value: 58, suffix: "그루", icon: TreePine, desc: "전국 산림에 식재 완료" },
+              { label: "탄소 흡수량", value: 51975, suffix: "kg", icon: TrendingUp, desc: "총 CO₂ 흡수량" },
+              { label: "인증마크 발급", value: 16, suffix: "건", icon: Award, desc: "4단계 인증등급 발급" },
             ].map((stat, i) => (
               <FloatingCard key={stat.label} delay={i * 0.1}>
                 <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-3xl p-8 text-center hover:bg-white/15 transition-all group">
@@ -626,71 +578,6 @@ export function Landing() {
           <FloatingCard delay={0.2}>
             <KakaoMapCompanies height="520px" showList={false} />
           </FloatingCard>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section id="reviews" className="py-28 bg-white relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <FloatingCard className="text-center mb-16">
-            <span
-              className="inline-block px-4 py-1.5 bg-[#D8F3DC] text-[#2D6A4F] rounded-full text-[0.8rem] mb-5"
-              style={{ fontWeight: 600 }}
-            >
-              TESTIMONIALS
-            </span>
-            <h2
-              className="text-[2.25rem] sm:text-[2.75rem] text-[#1a1a1a] mb-4"
-              style={{ fontWeight: 800, letterSpacing: "-0.02em" }}
-            >
-              고객 후기
-            </h2>
-            <p className="text-gray-500 text-[1.1rem]">
-              GROOT와 함께 ESG 경영을 실천하는 기업들의 이야기
-            </p>
-          </FloatingCard>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((t, i) => (
-              <FloatingCard key={t.name} delay={i * 0.15}>
-                <div className="h-full bg-gray-50 rounded-3xl p-8 border border-gray-100 hover:border-[#52B788]/20 hover:shadow-lg transition-all duration-300">
-                  <div className="flex gap-1 mb-5">
-                    {[...Array(t.rating)].map((_, j) => (
-                      <Star
-                        key={j}
-                        className="w-4.5 h-4.5 fill-amber-400 text-amber-400"
-                      />
-                    ))}
-                  </div>
-                  <p
-                    className="text-gray-700 text-[1rem] mb-8"
-                    style={{ lineHeight: 1.8 }}
-                  >
-                    "{t.content}"
-                  </p>
-                  <div className="flex items-center gap-3 mt-auto">
-                    <div
-                      className="w-11 h-11 rounded-full bg-gradient-to-br from-[#2D6A4F] to-[#52B788] flex items-center justify-center text-white text-[0.8rem]"
-                      style={{ fontWeight: 700 }}
-                    >
-                      {t.avatar}
-                    </div>
-                    <div>
-                      <p
-                        className="text-[0.95rem] text-[#1a1a1a]"
-                        style={{ fontWeight: 600 }}
-                      >
-                        {t.name}
-                      </p>
-                      <p className="text-[0.8rem] text-gray-400">
-                        {t.role} · {t.company}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </FloatingCard>
-            ))}
-          </div>
         </div>
       </section>
 
