@@ -41,13 +41,6 @@ console.log("답사 신청 목록:", data);
   }, []);
 
   
-  if(applications.length === 0) {
-    return (<div>
-      <p>답사신청내역 없음</p>
-    </div>
-    )
-  }
-
   const app = applications.find( (a) => a.detailId === selectedApp);
 
   return (
@@ -67,6 +60,11 @@ console.log("답사 신청 목록:", data);
         </button>
       </div>
 
+      {applications.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-border p-12 text-center">
+          <p className="text-muted-foreground text-[0.875rem]">답사 신청내역이 없습니다.</p>
+        </div>
+      ) : (
       <div className="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -100,6 +98,7 @@ console.log("답사 신청 목록:", data);
           </table>
         </div>
       </div>
+      )}
 
       {selectedApp && app && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedApp(null)}>
